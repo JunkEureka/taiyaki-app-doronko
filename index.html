@@ -2,7 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- タブレットでの連打・ピンチズームを防止 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>たい焼き屋台 管理アプリ</title>
   <style>
     :root {
@@ -22,6 +23,17 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      /* ダブルタップによる拡大（ズーム）を無効化 */
+      touch-action: manipulation;
+      /* タブレットで長押ししたときのテキスト選択を防止 */
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* 入力フォーム内だけはテキスト入力可能にする */
+    input[type="number"], input[type="file"] {
+      -webkit-user-select: auto;
+      user-select: auto;
     }
 
     body {
@@ -112,7 +124,7 @@
       color: var(--primary-color);
     }
 
-    /* 左上：在庫エリア */
+    /* 在庫エリア */
     .stock-list {
       display: flex;
       flex-direction: column;
@@ -176,7 +188,7 @@
       margin-left: 6px;
     }
 
-    /* 右上：お待ちのお客様エリア */
+    /* お待ちのお客様エリア */
     .needed-summary {
       background-color: #fff3cd;
       color: #856404;
@@ -242,18 +254,18 @@
     }
 
     .btn-step {
-      width: 32px;
-      height: 32px;
+      width: 40px; /* タブレット用に少し押しやすく拡大 */
+      height: 40px;
       border-radius: 6px;
       border: 1px solid var(--border-color);
       background-color: #f0f0f0;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      user-select: none;
+      touch-action: manipulation; /* 連打時のズーム防止 */
     }
 
     .btn-step:active {
@@ -261,8 +273,8 @@
     }
 
     .stepper input {
-      width: 44px;
-      height: 32px;
+      width: 48px;
+      height: 40px;
       text-align: center;
       border-radius: 6px;
       border: 1px solid var(--border-color);
@@ -280,6 +292,7 @@
       cursor: pointer;
       margin-top: 8px;
       transition: background 0.2s;
+      touch-action: manipulation;
     }
 
     .btn-primary {
@@ -402,7 +415,7 @@
       font-size: 14px;
     }
 
-    /* バックアップ */
+    /* バックアップ & リセットボタン */
     .backup-btns {
       display: flex;
       gap: 12px;
@@ -420,6 +433,22 @@
 
     .btn-outline:hover {
       background-color: #f0f0f0;
+    }
+
+    .btn-reset {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--danger-color);
+      background: #fff;
+      color: var(--danger-color);
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-reset:hover {
+      background-color: #fdf2f2;
     }
 
     /* モーダル */
@@ -528,10 +557,11 @@
   </div>
 
   <div class="card" style="margin-bottom: 24px;">
-    <div class="card-title">⚙️ バックアップ</div>
+    <div class="card-title">⚙️ データ管理・リセット</div>
     <div class="backup-btns">
       <button class="btn-outline" onclick="exportBackup()">バックアップ保存</button>
       <button class="btn-outline" onclick="document.getElementById('importFile').click()">バックアップ復元</button>
+      <button class="btn-reset" onclick="resetAllData()">全データクリア</button>
       <input type="file" id="importFile" style="display:none;" onchange="importBackup(event)" accept=".json">
     </div>
   </div>
@@ -632,7 +662,6 @@
       if (saveHistory) {
         recordState();
       }
-      // 全画面要素を完全に再描画
       renderStock();
       renderWaiting();
       renderSummary();
@@ -832,7 +861,6 @@
       renderAll(false);
     }
 
-    // お渡しボタンの確定処理
     function completeOrder(index) {
       recordState();
 
@@ -855,7 +883,6 @@
         totalPrice += item.price * item.count;
       });
 
-      // 購入履歴リストへ先頭追加
       dayData.history.unshift({
         no: target.no,
         time: timeStr,
@@ -907,7 +934,6 @@
       document.getElementById('chartContainer').innerHTML = html;
     }
 
-    // 購入履歴の安全な描画処理
     function renderHistory() {
       const history = appData[currentDay].history || [];
       const container = document.getElementById('historyList');
@@ -931,7 +957,6 @@
       container.innerHTML = html;
     }
 
-    // 3日間の集計の安全な描画処理
     function render3DaysSummary() {
       const container = document.getElementById('threeDaysSummary');
       if (!container) return;
@@ -957,6 +982,23 @@
         `;
       });
       container.innerHTML = html;
+    }
+
+    function resetAllData() {
+      if (confirm('1日目〜3日目のすべてのデータ（在庫・売上・履歴）を消去して初期化しますか？')) {
+        historyStateStack = [];
+        appData = {
+          1: createDayData(),
+          2: createDayData(),
+          3: createDayData()
+        };
+        currentDay = 1;
+        document.getElementById('daySelect').value = '1';
+        resetInputs('ord');
+        resetInputs('bake');
+        renderAll(false);
+        alert('データをすべて削除し、新品の状態にリセットしました！');
+      }
     }
 
     function exportBackup() {
