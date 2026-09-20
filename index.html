@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>たい焼き屋台 管理アプリ</title>
+  <style>
+    :root {
+      --bg-color: #f7f4ef;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --primary-color: #3d312a;
+      --accent-color: #e27d60;
+      --green-btn: #e0ece4;
+      --green-btn-hover: #c3decb;
+      --border-color: #e0dcd3;
+      --danger-color: #d9534f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 16px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* ヘッダー */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary-color);
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-undo {
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: #ffffff;
+      color: var(--primary-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+
+    .btn-undo:hover {
+      background-color: #f0f0f0;
+    }
+
+    .day-selector select {
+      padding: 8px 12px;
+      font-size: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* メイン 4分割レイアウト */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--primary-color);
+    }
+
+    /* 左上：在庫エリア */
+    .stock-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stock-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background-color: #faf8f5;
+      border-radius: 8px;
+      border: 1px solid #efebe4;
+    }
+
+    .stock-info {
+      display: flex;
+      align-items: center;
+    }
+
+    .stock-name {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .stock-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stock-count {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .stock-count.low {
+      color: var(--danger-color);
+    }
+
+    .toggle-soldout {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .toggle-soldout input {
+      cursor: pointer;
+    }
+
+    .sold-out-badge {
+      background-color: var(--danger-color);
+      color: white;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+
+    /* 右上：お待ちのお客様エリア */
+    .needed-summary {
+      background-color: #fff3cd;
+      color: #856404;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .waiting-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .waiting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .waiting-info {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .btn-pass {
+      background-color: #e0e0e0;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    .btn-pass:hover {
+      background-color: #cccccc;
+    }
+
+    /* 入力エリア */
+    .item-input-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .item-input-row label {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-step {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: #f0f0f0;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .btn-step:active {
+      background-color: #ddd;
+    }
+
+    .stepper input {
+      width: 44px;
+      height: 32px;
+      text-align: center;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #261f1a;
+    }
+
+    .btn-secondary {
+      background-color: var(--green-btn);
+      color: var(--primary-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--green-btn-hover);
+    }
+
+    /* サマリーバー */
+    .summary-bar {
+      display: flex;
+      justify-content: space-around;
+      background-color: var(--card-bg);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      font-weight: bold;
+    }
+
+    .summary-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .summary-value {
+      font-size: 18px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 16px 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 棒グラフ */
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chart-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chart-label {
+      width: 140px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .chart-bar-wrapper {
+      flex-grow: 1;
+      background-color: #efebe4;
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .chart-bar {
+      height: 100%;
+      background-color: var(--accent-color);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .chart-val {
+      width: 120px;
+      text-align: right;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    /* 履歴リスト */
+    .history-list {
+      max-height: 220px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px dotted var(--border-color);
+    }
+
+    /* 3日間集計 */
+    .days-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .day-box {
+      background-color: #faf8f5;
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+
+    /* バックアップ */
+    .backup-btns {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-outline {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-outline:hover {
+      background-color: #f0f0f0;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .modal-btns button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">🐟 たい焼き屋台</div>
+    <div class="header-controls">
+      <button class="btn-undo" onclick="undoLastAction()">↩ 前に戻す</button>
+      <div class="day-selector">
+        <select id="daySelect" onchange="changeDay(this.value)">
+          <option value="1">1日目</option>
+          <option value="2">2日目</option>
+          <option value="3">3日目</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-grid">
+    <div class="card">
+      <div class="card-title"><span>在庫</span></div>
+      <div class="stock-list" id="stockList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>🧑 お待ちのお客様</span></div>
+      <div id="neededSummary" class="needed-summary">残り必要数: なし</div>
+      <div class="waiting-list" id="waitingList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 注文を追加</div>
+      <div id="orderInputs"></div>
+      <button class="btn-action btn-primary" onclick="openConfirmModal()">この注文を追加する</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔥 製造を記録</div>
+      <div id="bakeInputs"></div>
+      <button class="btn-action btn-secondary" onclick="addBakeToStock()">在庫に追加</button>
+    </div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-item">
+      <span>今日の売上</span>
+      <span class="summary-value" id="todaySales">￥0</span>
+    </div>
+    <div class="summary-item">
+      <span>今日の販売数</span>
+      <span class="summary-value" id="todayCount">0個</span>
+    </div>
+  </div>
+
+  <div class="section-title">▼ 管理・記録</div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <div class="card-title">📊 今日の売れ行き</div>
+    <div class="chart-container" id="chartContainer"></div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <div class="card-title">👥 購入履歴</div>
+    <div class="history-list" id="historyList">まだ購入履歴はありません。</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <div class="card-title">📅 3日間の集計</div>
+    <div class="days-summary" id="threeDaysSummary"></div>
+  </div>
+
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">⚙️ バックアップ</div>
+    <div class="backup-btns">
+      <button class="btn-outline" onclick="exportBackup()">バックアップ保存</button>
+      <button class="btn-outline" onclick="document.getElementById('importFile').click()">バックアップ復元</button>
+      <input type="file" id="importFile" style="display:none;" onchange="importBackup(event)" accept=".json">
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <h3>注文内容の確認</h3>
+      <p style="margin: 12px 0; font-size: 15px;" id="modalContent"></p>
+      <p style="font-size: 13px; color: #666;">この内容でお待ちリストに追加しますか？</p>
+      <div class="modal-btns">
+        <button style="background: #e0e0e0;" onclick="closeModal()">キャンセル</button>
+        <button style="background: var(--primary-color); color: white;" onclick="confirmOrder()">追加する</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MENU = [
+      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 150 },
+      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 150 },
+      { id: 'cinnamon', emoji: '🍎', name: 'アップルシナモン', short: 'シナ', price: 200 },
+      { id: 'potato', emoji: '🥔', name: 'ジャーマンポテト', short: 'ポテ', price: 200 }
+    ];
+
+    let currentDay = 1;
+    let historyStateStack = [];
+
+    function createDayData() {
+      return {
+        stock: { anko: 0, custard: 0, cinnamon: 0, potato: 0 },
+        manualSoldOut: { anko: false, custard: false, cinnamon: false, potato: false },
+        waiting: [],
+        sales: { anko: 0, custard: 0, cinnamon: 0, potato: 0 },
+        history: [],
+        orderCounter: 1
+      };
+    }
+
+    let appData = {
+      1: createDayData(),
+      2: createDayData(),
+      3: createDayData()
+    };
+
+    function recordState() {
+      if (historyStateStack.length >= 20) {
+        historyStateStack.shift();
+      }
+      historyStateStack.push(JSON.stringify(appData));
+    }
+
+    function undoLastAction() {
+      if (historyStateStack.length === 0) {
+        alert('これ以上前に戻せません。');
+        return;
+      }
+      const previousState = historyStateStack.pop();
+      appData = JSON.parse(previousState);
+      renderAll(false);
+    }
+
+    window.onload = function() {
+      const saved = localStorage.getItem('taiyaki_app_data');
+      if (saved) {
+        try { 
+          const parsed = JSON.parse(saved);
+          [1, 2, 3].forEach(d => {
+            if (parsed[d]) {
+              appData[d] = {
+                stock: { ...createDayData().stock, ...(parsed[d].stock || {}) },
+                manualSoldOut: { ...createDayData().manualSoldOut, ...(parsed[d].manualSoldOut || {}) },
+                waiting: Array.isArray(parsed[d].waiting) ? parsed[d].waiting : [],
+                sales: { ...createDayData().sales, ...(parsed[d].sales || {}) },
+                history: Array.isArray(parsed[d].history) ? parsed[d].history : [],
+                orderCounter: parsed[d].orderCounter || 1
+              };
+            }
+          });
+        } catch(e) {
+          console.error("復元エラー:", e);
+        }
+      }
+      renderInputs();
+      renderAll(false);
+    };
+
+    function saveData() {
+      localStorage.setItem('taiyaki_app_data', JSON.stringify(appData));
+    }
+
+    function changeDay(day) {
+      currentDay = parseInt(day);
+      document.getElementById('daySelect').value = day;
+      renderAll(false);
+    }
+
+    function renderAll(saveHistory = true) {
+      if (saveHistory) {
+        recordState();
+      }
+      // 全画面要素を完全に再描画
+      renderStock();
+      renderWaiting();
+      renderSummary();
+      renderChart();
+      renderHistory();
+      render3DaysSummary();
+      saveData();
+    }
+
+    function renderStock() {
+      const data = appData[currentDay].stock || {};
+      const soldOutData = appData[currentDay].manualSoldOut || {};
+      let html = '';
+      MENU.forEach(item => {
+        const count = data[item.id] || 0;
+        const isManualSoldOut = soldOutData[item.id] || false;
+        const isLow = count <= 5;
+        const isSoldOut = count === 0 || isManualSoldOut;
+
+        html += `
+          <div class="stock-item">
+            <div class="stock-info">
+              <div>
+                <span class="stock-name">${item.emoji} ${item.name}</span>
+                ${isSoldOut ? '<span class="sold-out-badge">売り切れ</span>' : ''}
+              </div>
+            </div>
+            <div class="stock-right">
+              <label class="toggle-soldout">
+                <input type="checkbox" ${isManualSoldOut ? 'checked' : ''} onchange="toggleManualSoldOut('${item.id}', this.checked)"> 完売
+              </label>
+              <div class="stock-count ${isLow ? 'low' : ''}">${count}個</div>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('stockList').innerHTML = html;
+    }
+
+    function toggleManualSoldOut(itemId, isChecked) {
+      recordState();
+      if (!appData[currentDay].manualSoldOut) appData[currentDay].manualSoldOut = {};
+      appData[currentDay].manualSoldOut[itemId] = isChecked;
+      renderAll(false);
+    }
+
+    function renderWaiting() {
+      const list = appData[currentDay].waiting || [];
+      const container = document.getElementById('waitingList');
+
+      const neededTotals = {};
+      list.forEach(ord => {
+        if (ord.items) {
+          ord.items.forEach(i => {
+            neededTotals[i.short] = (neededTotals[i.short] || 0) + i.count;
+          });
+        }
+      });
+
+      const neededArr = Object.keys(neededTotals).map(k => `${k}${neededTotals[k]}個`);
+      const neededSummaryElem = document.getElementById('neededSummary');
+      if (neededArr.length > 0) {
+        neededSummaryElem.innerText = `残り必要数: ${neededArr.join('  ')}`;
+      } else {
+        neededSummaryElem.innerText = '残り必要数: なし';
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">お待ちのお客様はいません</div>';
+        return;
+      }
+
+      let html = '';
+      list.forEach((ord, index) => {
+        const itemsStr = ord.items ? ord.items.map(i => `${i.short}${i.count}`).join(' ') : '';
+        html += `
+          <div class="waiting-item">
+            <div class="waiting-info">${ord.no}. ${itemsStr}</div>
+            <button class="btn-pass" onclick="completeOrder(${index})">お渡し</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderInputs() {
+      let orderHtml = '';
+      let bakeHtml = '';
+      MENU.forEach(item => {
+        orderHtml += `
+          <div class="item-input-row">
+            <label>${item.emoji} ${item.name} (${item.price}円)</label>
+            <div class="stepper">
+              <button class="btn-step" onclick="changeInputValue('ord_${item.id}', -1)">-</button>
+              <input type="number" id="ord_${item.id}" min="0" value="0">
+              <button class="btn-step" onclick="changeInputValue('ord_${item.id}', 1)">+</button>
+            </div>
+          </div>
+        `;
+        bakeHtml += `
+          <div class="item-input-row">
+            <label>${item.emoji} ${item.name}</label>
+            <div class="stepper">
+              <button class="btn-step" onclick="changeInputValue('bake_${item.id}', -1)">-</button>
+              <input type="number" id="bake_${item.id}" min="0" value="0">
+              <button class="btn-step" onclick="changeInputValue('bake_${item.id}', 1)">+</button>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('orderInputs').innerHTML = orderHtml;
+      document.getElementById('bakeInputs').innerHTML = bakeHtml;
+    }
+
+    function changeInputValue(inputId, delta) {
+      const input = document.getElementById(inputId);
+      let val = parseInt(input.value) || 0;
+      val = Math.max(0, val + delta);
+      input.value = val;
+    }
+
+    function resetInputs(prefix) {
+      MENU.forEach(item => {
+        const elem = document.getElementById(`${prefix}_${item.id}`);
+        if (elem) elem.value = 0;
+      });
+    }
+
+    let pendingOrder = null;
+    function openConfirmModal() {
+      const items = [];
+      let summaryText = [];
+      MENU.forEach(item => {
+        const val = parseInt(document.getElementById(`ord_${item.id}`).value) || 0;
+        if (val > 0) {
+          items.push({ id: item.id, name: item.name, short: item.short, count: val, price: item.price });
+          summaryText.push(`${item.emoji} ${item.name} × ${val}`);
+        }
+      });
+
+      if (items.length === 0) {
+        alert('個数を入力してください。');
+        return;
+      }
+
+      pendingOrder = items;
+      document.getElementById('modalContent').innerHTML = summaryText.join('<br>');
+      document.getElementById('confirmModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('confirmModal').style.display = 'none';
+      pendingOrder = null;
+    }
+
+    function confirmOrder() {
+      if (!pendingOrder) return;
+      recordState();
+      
+      const dayData = appData[currentDay];
+      if (!dayData.waiting) dayData.waiting = [];
+      
+      dayData.waiting.push({
+        no: dayData.orderCounter++,
+        items: pendingOrder
+      });
+      resetInputs('ord');
+      closeModal();
+      renderAll(false);
+    }
+
+    function addBakeToStock() {
+      let added = false;
+      MENU.forEach(item => {
+        const val = parseInt(document.getElementById(`bake_${item.id}`).value) || 0;
+        if (val > 0) added = true;
+      });
+
+      if (!added) {
+        alert('製造個数を入力してください。');
+        return;
+      }
+
+      recordState();
+
+      const dayData = appData[currentDay];
+      if (!dayData.stock) dayData.stock = {};
+
+      MENU.forEach(item => {
+        const val = parseInt(document.getElementById(`bake_${item.id}`).value) || 0;
+        if (val > 0) {
+          dayData.stock[item.id] = (dayData.stock[item.id] || 0) + val;
+        }
+      });
+
+      resetInputs('bake');
+      renderAll(false);
+    }
+
+    // お渡しボタンの確定処理
+    function completeOrder(index) {
+      recordState();
+
+      const dayData = appData[currentDay];
+      if (!dayData.sales) dayData.sales = { anko: 0, custard: 0, cinnamon: 0, potato: 0 };
+      if (!dayData.history) dayData.history = [];
+      if (!dayData.stock) dayData.stock = {};
+
+      const target = dayData.waiting[index];
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      let detailStrs = [];
+      let totalPrice = 0;
+
+      target.items.forEach(item => {
+        dayData.stock[item.id] = Math.max(0, (dayData.stock[item.id] || 0) - item.count);
+        dayData.sales[item.id] = (dayData.sales[item.id] || 0) + item.count;
+        detailStrs.push(`${item.short}${item.count}`);
+        totalPrice += item.price * item.count;
+      });
+
+      // 購入履歴リストへ先頭追加
+      dayData.history.unshift({
+        no: target.no,
+        time: timeStr,
+        text: detailStrs.join(' '),
+        price: totalPrice
+      });
+
+      dayData.waiting.splice(index, 1);
+      renderAll(false);
+    }
+
+    function renderSummary() {
+      const sales = appData[currentDay].sales || {};
+      let totalAmount = 0;
+      let totalCount = 0;
+
+      MENU.forEach(item => {
+        const count = sales[item.id] || 0;
+        totalCount += count;
+        totalAmount += count * item.price;
+      });
+
+      document.getElementById('todaySales').innerText = `￥${totalAmount.toLocaleString()}`;
+      document.getElementById('todayCount').innerText = `${totalCount}個`;
+    }
+
+    function renderChart() {
+      const sales = appData[currentDay].sales || {};
+      let maxCount = 1;
+      MENU.forEach(item => {
+        if ((sales[item.id] || 0) > maxCount) maxCount = sales[item.id];
+      });
+
+      let html = '';
+      MENU.forEach(item => {
+        const count = sales[item.id] || 0;
+        const amount = count * item.price;
+        const percent = (count / maxCount) * 100;
+        html += `
+          <div class="chart-row">
+            <div class="chart-label">${item.emoji} ${item.name}</div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: ${percent}%;"></div>
+            </div>
+            <div class="chart-val">${count}個 / ￥${amount.toLocaleString()}</div>
+          </div>
+        `;
+      });
+      document.getElementById('chartContainer').innerHTML = html;
+    }
+
+    // 購入履歴の安全な描画処理
+    function renderHistory() {
+      const history = appData[currentDay].history || [];
+      const container = document.getElementById('historyList');
+      if (!container) return;
+
+      if (history.length === 0) {
+        container.innerHTML = '<div style="color: #888;">まだ購入履歴はありません。</div>';
+        return;
+      }
+
+      let html = '';
+      history.forEach(h => {
+        const priceStr = h.price !== undefined ? `￥${h.price.toLocaleString()}` : '';
+        html += `
+          <div class="history-item">
+            <span>No.${h.no} (${h.time})</span>
+            <span>${h.text} ${priceStr ? ` <strong>${priceStr}</strong>` : ''}</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // 3日間の集計の安全な描画処理
+    function render3DaysSummary() {
+      const container = document.getElementById('threeDaysSummary');
+      if (!container) return;
+
+      let html = '';
+      [1, 2, 3].forEach(d => {
+        const dData = appData[d] || createDayData();
+        const sales = dData.sales || {};
+        let totalAmount = 0;
+        let totalCount = 0;
+
+        MENU.forEach(item => {
+          const count = sales[item.id] || 0;
+          totalCount += count;
+          totalAmount += count * item.price;
+        });
+
+        html += `
+          <div class="day-box">
+            <strong>${d}日目</strong>
+            <span>売上 ￥${totalAmount.toLocaleString()} / 販売 ${totalCount}個</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function exportBackup() {
+      const jsonStr = JSON.stringify(appData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `taiyaki_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          recordState();
+          const imported = JSON.parse(e.target.result);
+          [1, 2, 3].forEach(d => {
+            if (imported[d]) {
+              appData[d] = {
+                stock: { ...createDayData().stock, ...(imported[d].stock || {}) },
+                manualSoldOut: { ...createDayData().manualSoldOut, ...(imported[d].manualSoldOut || {}) },
+                waiting: Array.isArray(imported[d].waiting) ? imported[d].waiting : [],
+                sales: { ...createDayData().sales, ...(imported[d].sales || {}) },
+                history: Array.isArray(imported[d].history) ? imported[d].history : [],
+                orderCounter: imported[d].orderCounter || 1
+              };
+            }
+          });
+          renderAll(false);
+          alert('バックアップから復元しました！');
+        } catch (err) {
+          alert('ファイルの読み込みに失敗しました。正しいJSONファイルを選択してください。');
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>
