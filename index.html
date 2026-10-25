@@ -2,7 +2,6 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <!-- タブレットでの連打・ピンチズームを防止 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>たい焼き屋台 管理アプリ</title>
   <style>
@@ -16,6 +15,9 @@
       --green-btn-hover: #c3decb;
       --border-color: #e0dcd3;
       --danger-color: #d9534f;
+      --tag-bg: #f0eae1;
+      --tag-active: #3d312a;
+      --tag-active-text: #ffffff;
     }
 
     * {
@@ -23,15 +25,12 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      /* ダブルタップによる拡大（ズーム）を無効化 */
       touch-action: manipulation;
-      /* タブレットで長押ししたときのテキスト選択を防止 */
       -webkit-user-select: none;
       user-select: none;
     }
 
-    /* 入力フォーム内だけはテキスト入力可能にする */
-    input[type="number"], input[type="file"] {
+    input[type="number"] {
       -webkit-user-select: auto;
       user-select: auto;
     }
@@ -44,7 +43,6 @@
       margin: 0 auto;
     }
 
-    /* ヘッダー */
     header {
       display: flex;
       justify-content: space-between;
@@ -97,7 +95,6 @@
       cursor: pointer;
     }
 
-    /* メイン 4分割レイアウト */
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -124,7 +121,6 @@
       color: var(--primary-color);
     }
 
-    /* 在庫エリア */
     .stock-list {
       display: flex;
       flex-direction: column;
@@ -175,10 +171,6 @@
       cursor: pointer;
     }
 
-    .toggle-soldout input {
-      cursor: pointer;
-    }
-
     .sold-out-badge {
       background-color: var(--danger-color);
       color: white;
@@ -188,7 +180,6 @@
       margin-left: 6px;
     }
 
-    /* お待ちのお客様エリア */
     .needed-summary {
       background-color: #fff3cd;
       color: #856404;
@@ -203,7 +194,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 200px;
+      max-height: 220px;
       overflow-y: auto;
     }
 
@@ -220,6 +211,16 @@
       font-weight: 500;
     }
 
+    .tag-ticket {
+      background-color: var(--accent-color);
+      color: white;
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+      font-weight: bold;
+    }
+
     .btn-pass {
       background-color: #e0e0e0;
       border: none;
@@ -234,7 +235,6 @@
       background-color: #cccccc;
     }
 
-    /* 入力エリア */
     .item-input-row {
       display: flex;
       justify-content: space-between;
@@ -254,7 +254,7 @@
     }
 
     .btn-step {
-      width: 40px; /* タブレット用に少し押しやすく拡大 */
+      width: 40px;
       height: 40px;
       border-radius: 6px;
       border: 1px solid var(--border-color);
@@ -265,7 +265,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      touch-action: manipulation; /* 連打時のズーム防止 */
     }
 
     .btn-step:active {
@@ -282,6 +281,43 @@
       font-weight: bold;
     }
 
+    .ticket-selector-container {
+      margin: 12px 0 8px 0;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .ticket-label {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: var(--primary-color);
+    }
+
+    .ticket-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+    }
+
+    .ticket-btn {
+      padding: 6px 0;
+      font-size: 13px;
+      font-weight: bold;
+      background-color: var(--tag-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.1s;
+    }
+
+    .ticket-btn.selected {
+      background-color: var(--tag-active);
+      color: var(--tag-active-text);
+      border-color: var(--tag-active);
+    }
+
     .btn-action {
       width: 100%;
       padding: 12px;
@@ -292,7 +328,6 @@
       cursor: pointer;
       margin-top: 8px;
       transition: background 0.2s;
-      touch-action: manipulation;
     }
 
     .btn-primary {
@@ -313,7 +348,6 @@
       background-color: var(--green-btn-hover);
     }
 
-    /* サマリーバー */
     .summary-bar {
       display: flex;
       justify-content: space-around;
@@ -344,7 +378,6 @@
       gap: 8px;
     }
 
-    /* 棒グラフ */
     .chart-container {
       display: flex;
       flex-direction: column;
@@ -385,7 +418,6 @@
       font-weight: bold;
     }
 
-    /* 履歴リスト */
     .history-list {
       max-height: 220px;
       overflow-y: auto;
@@ -399,7 +431,6 @@
       border-bottom: 1px dotted var(--border-color);
     }
 
-    /* 3日間集計 */
     .days-summary {
       display: flex;
       flex-direction: column;
@@ -415,29 +446,30 @@
       font-size: 14px;
     }
 
-    /* バックアップ & リセットボタン */
-    .backup-btns {
+    .action-btns-row {
       display: flex;
       gap: 12px;
     }
 
-    .btn-outline {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid var(--border-color);
-      background: white;
+    .btn-export {
+      flex: 2;
+      padding: 12px;
+      border: 1px solid var(--primary-color);
+      background: var(--primary-color);
+      color: white;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.2s;
     }
 
-    .btn-outline:hover {
-      background-color: #f0f0f0;
+    .btn-export:hover {
+      background-color: #261f1a;
     }
 
     .btn-reset {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
       border: 1px solid var(--danger-color);
       background: #fff;
       color: var(--danger-color);
@@ -451,7 +483,6 @@
       background-color: #fdf2f2;
     }
 
-    /* モーダル */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -518,6 +549,24 @@
     <div class="card">
       <div class="card-title">📝 注文を追加</div>
       <div id="orderInputs"></div>
+      
+      <div class="ticket-selector-container">
+        <div class="ticket-label">🏷️ 整理券番号（混雑時のみ選択）</div>
+        <div class="ticket-grid" id="ticketGrid">
+          <div class="ticket-btn selected" onclick="selectTicket(null)" id="ticket_none">なし</div>
+          <div class="ticket-btn" onclick="selectTicket(1)" id="ticket_1">1</div>
+          <div class="ticket-btn" onclick="selectTicket(2)" id="ticket_2">2</div>
+          <div class="ticket-btn" onclick="selectTicket(3)" id="ticket_3">3</div>
+          <div class="ticket-btn" onclick="selectTicket(4)" id="ticket_4">4</div>
+          <div class="ticket-btn" onclick="selectTicket(5)" id="ticket_5">5</div>
+          <div class="ticket-btn" onclick="selectTicket(6)" id="ticket_6">6</div>
+          <div class="ticket-btn" onclick="selectTicket(7)" id="ticket_7">7</div>
+          <div class="ticket-btn" onclick="selectTicket(8)" id="ticket_8">8</div>
+          <div class="ticket-btn" onclick="selectTicket(9)" id="ticket_9">9</div>
+          <div class="ticket-btn" onclick="selectTicket(10)" id="ticket_10">10</div>
+        </div>
+      </div>
+
       <button class="btn-action btn-primary" onclick="openConfirmModal()">この注文を追加する</button>
     </div>
 
@@ -557,12 +606,10 @@
   </div>
 
   <div class="card" style="margin-bottom: 24px;">
-    <div class="card-title">⚙️ データ管理・リセット</div>
-    <div class="backup-btns">
-      <button class="btn-outline" onclick="exportBackup()">バックアップ保存</button>
-      <button class="btn-outline" onclick="document.getElementById('importFile').click()">バックアップ復元</button>
+    <div class="card-title">⚙️ データ管理・集計</div>
+    <div class="action-btns-row">
+      <button class="btn-export" onclick="exportDailyReport()">📊 今日の売上をファイルに書き出す</button>
       <button class="btn-reset" onclick="resetAllData()">全データクリア</button>
-      <input type="file" id="importFile" style="display:none;" onchange="importBackup(event)" accept=".json">
     </div>
   </div>
 
@@ -580,13 +627,14 @@
 
   <script>
     const MENU = [
-      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 200 },
-      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 200 },
+      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 150 },
+      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 150 },
       { id: 'cinnamon', emoji: '🍎', name: 'アップルシナモン', short: 'シナ', price: 200 },
       { id: 'potato', emoji: '🥔', name: 'ジャーマンポテト', short: 'ポテ', price: 200 }
     ];
 
     let currentDay = 1;
+    let selectedTicket = null;
     let historyStateStack = [];
 
     function createDayData() {
@@ -708,6 +756,16 @@
       renderAll(false);
     }
 
+    function selectTicket(num) {
+      selectedTicket = num;
+      document.querySelectorAll('.ticket-btn').forEach(btn => btn.classList.remove('selected'));
+      if (num === null) {
+        document.getElementById('ticket_none').classList.add('selected');
+      } else {
+        document.getElementById(`ticket_${num}`).classList.add('selected');
+      }
+    }
+
     function renderWaiting() {
       const list = appData[currentDay].waiting || [];
       const container = document.getElementById('waitingList');
@@ -737,9 +795,10 @@
       let html = '';
       list.forEach((ord, index) => {
         const itemsStr = ord.items ? ord.items.map(i => `${i.short}${i.count}`).join(' ') : '';
+        const ticketBadge = ord.ticket !== null ? `<span class="tag-ticket">札:${ord.ticket}</span>` : '';
         html += `
           <div class="waiting-item">
-            <div class="waiting-info">${ord.no}. ${itemsStr}</div>
+            <div class="waiting-info">${ticketBadge}No.${ord.no}: ${itemsStr}</div>
             <button class="btn-pass" onclick="completeOrder(${index})">お渡し</button>
           </div>
         `;
@@ -807,6 +866,10 @@
         return;
       }
 
+      if (selectedTicket !== null) {
+        summaryText.push(`<br><strong style="color:var(--accent-color);">🏷️ 整理券番号: ${selectedTicket}番</strong>`);
+      }
+
       pendingOrder = items;
       document.getElementById('modalContent').innerHTML = summaryText.join('<br>');
       document.getElementById('confirmModal').style.display = 'flex';
@@ -826,9 +889,12 @@
       
       dayData.waiting.push({
         no: dayData.orderCounter++,
+        ticket: selectedTicket,
         items: pendingOrder
       });
+
       resetInputs('ord');
+      selectTicket(null);
       closeModal();
       renderAll(false);
     }
@@ -883,10 +949,11 @@
         totalPrice += item.price * item.count;
       });
 
+      const ticketInfo = target.ticket !== null ? `[札:${target.ticket}] ` : '';
       dayData.history.unshift({
         no: target.no,
         time: timeStr,
-        text: detailStrs.join(' '),
+        text: `${ticketInfo}${detailStrs.join(' ')}`,
         price: totalPrice
       });
 
@@ -984,6 +1051,53 @@
       container.innerHTML = html;
     }
 
+    // 売上レポートファイル出力機能
+    function exportDailyReport() {
+      const dayData = appData[currentDay];
+      const sales = dayData.sales || {};
+      let totalAmount = 0;
+      let totalCount = 0;
+
+      let reportLines = [];
+      reportLines.push(`【たい焼き屋台 売上レポート - ${currentDay}日目】`);
+      reportLines.push(`出力日時: ${new Date().toLocaleString()}`);
+      reportLines.push("----------------------------------------");
+      reportLines.push("■ 商品別内訳");
+
+      MENU.forEach(item => {
+        const count = sales[item.id] || 0;
+        const amount = count * item.price;
+        totalCount += count;
+        totalAmount += amount;
+        reportLines.push(`- ${item.name}: ${count}個 / ￥${amount.toLocaleString()}`);
+      });
+
+      reportLines.push("----------------------------------------");
+      reportLines.push(`総販売数: ${totalCount}個`);
+      reportLines.push(`総売上金額: ￥${totalAmount.toLocaleString()}`);
+      reportLines.push("----------------------------------------");
+      reportLines.push("■ 購入履歴一覧");
+
+      const history = dayData.history || [];
+      if (history.length === 0) {
+        reportLines.push("(購入履歴なし)");
+      } else {
+        history.forEach(h => {
+          const priceStr = h.price !== undefined ? `￥${h.price.toLocaleString()}` : '';
+          reportLines.push(`[${h.time}] No.${h.no} : ${h.text} (${priceStr})`);
+        });
+      }
+
+      const reportText = reportLines.join('\n');
+      const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `taiyaki_report_day${currentDay}_${new Date().toISOString().slice(0,10)}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     function resetAllData() {
       if (confirm('1日目〜3日目のすべてのデータ（在庫・売上・履歴）を消去して初期化しますか？')) {
         historyStateStack = [];
@@ -996,49 +1110,10 @@
         document.getElementById('daySelect').value = '1';
         resetInputs('ord');
         resetInputs('bake');
+        selectTicket(null);
         renderAll(false);
         alert('データをすべて削除し、新品の状態にリセットしました！');
       }
-    }
-
-    function exportBackup() {
-      const jsonStr = JSON.stringify(appData, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `taiyaki_backup_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function importBackup(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          recordState();
-          const imported = JSON.parse(e.target.result);
-          [1, 2, 3].forEach(d => {
-            if (imported[d]) {
-              appData[d] = {
-                stock: { ...createDayData().stock, ...(imported[d].stock || {}) },
-                manualSoldOut: { ...createDayData().manualSoldOut, ...(imported[d].manualSoldOut || {}) },
-                waiting: Array.isArray(imported[d].waiting) ? imported[d].waiting : [],
-                sales: { ...createDayData().sales, ...(imported[d].sales || {}) },
-                history: Array.isArray(imported[d].history) ? imported[d].history : [],
-                orderCounter: imported[d].orderCounter || 1
-              };
-            }
-          });
-          renderAll(false);
-          alert('バックアップから復元しました！');
-        } catch (err) {
-          alert('ファイルの読み込みに失敗しました。正しいJSONファイルを選択してください。');
-        }
-      };
-      reader.readAsText(file);
     }
   </script>
 </body>
