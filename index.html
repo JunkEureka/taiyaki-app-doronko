@@ -281,43 +281,6 @@
       font-weight: bold;
     }
 
-    .ticket-selector-container {
-      margin: 12px 0 8px 0;
-      padding-top: 8px;
-      border-top: 1px dashed var(--border-color);
-    }
-
-    .ticket-label {
-      font-size: 13px;
-      font-weight: bold;
-      margin-bottom: 6px;
-      color: var(--primary-color);
-    }
-
-    .ticket-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 4px;
-    }
-
-    .ticket-btn {
-      padding: 6px 0;
-      font-size: 13px;
-      font-weight: bold;
-      background-color: var(--tag-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.1s;
-    }
-
-    .ticket-btn.selected {
-      background-color: var(--tag-active);
-      color: var(--tag-active-text);
-      border-color: var(--tag-active);
-    }
-
     .btn-action {
       width: 100%;
       padding: 12px;
@@ -483,6 +446,7 @@
       background-color: #fdf2f2;
     }
 
+    /* モーダル内レイアウト調整 */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -497,9 +461,33 @@
       background: white;
       padding: 20px;
       border-radius: 12px;
-      width: 320px;
+      width: 340px;
       text-align: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .modal-ticket-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      margin: 12px 0;
+    }
+
+    .modal-ticket-btn {
+      padding: 8px 0;
+      font-size: 13px;
+      font-weight: bold;
+      background-color: var(--tag-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .modal-ticket-btn.selected {
+      background-color: var(--tag-active);
+      color: var(--tag-active-text);
+      border-color: var(--tag-active);
     }
 
     .modal-btns {
@@ -546,27 +534,10 @@
       <div class="waiting-list" id="waitingList"></div>
     </div>
 
+    <!-- 注文追加カード（スッキリした見た目に戻しました） -->
     <div class="card">
       <div class="card-title">📝 注文を追加</div>
       <div id="orderInputs"></div>
-      
-      <div class="ticket-selector-container">
-        <div class="ticket-label">🏷️ 整理券番号（混雑時のみ選択）</div>
-        <div class="ticket-grid" id="ticketGrid">
-          <div class="ticket-btn selected" onclick="selectTicket(null)" id="ticket_none">なし</div>
-          <div class="ticket-btn" onclick="selectTicket(1)" id="ticket_1">1</div>
-          <div class="ticket-btn" onclick="selectTicket(2)" id="ticket_2">2</div>
-          <div class="ticket-btn" onclick="selectTicket(3)" id="ticket_3">3</div>
-          <div class="ticket-btn" onclick="selectTicket(4)" id="ticket_4">4</div>
-          <div class="ticket-btn" onclick="selectTicket(5)" id="ticket_5">5</div>
-          <div class="ticket-btn" onclick="selectTicket(6)" id="ticket_6">6</div>
-          <div class="ticket-btn" onclick="selectTicket(7)" id="ticket_7">7</div>
-          <div class="ticket-btn" onclick="selectTicket(8)" id="ticket_8">8</div>
-          <div class="ticket-btn" onclick="selectTicket(9)" id="ticket_9">9</div>
-          <div class="ticket-btn" onclick="selectTicket(10)" id="ticket_10">10</div>
-        </div>
-      </div>
-
       <button class="btn-action btn-primary" onclick="openConfirmModal()">この注文を追加する</button>
     </div>
 
@@ -613,11 +584,29 @@
     </div>
   </div>
 
+  <!-- 確認・整理券選択モーダル -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal">
       <h3>注文内容の確認</h3>
-      <p style="margin: 12px 0; font-size: 15px;" id="modalContent"></p>
-      <p style="font-size: 13px; color: #666;">この内容でお待ちリストに追加しますか？</p>
+      <p style="margin: 10px 0; font-size: 15px;" id="modalContent"></p>
+      
+      <div style="text-align: left; margin-top: 12px; border-top: 1px dashed var(--border-color); pt: 8px;">
+        <label style="font-size: 13px; font-weight: bold; color: var(--primary-color);">🏷️ 整理券番号を選択（混雑時のみ）</label>
+        <div class="modal-ticket-grid" id="modalTicketGrid">
+          <div class="modal-ticket-btn selected" onclick="selectModalTicket(null)" id="mt_none">なし</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(1)" id="mt_1">1</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(2)" id="mt_2">2</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(3)" id="mt_3">3</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(4)" id="mt_4">4</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(5)" id="mt_5">5</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(6)" id="mt_6">6</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(7)" id="mt_7">7</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(8)" id="mt_8">8</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(9)" id="mt_9">9</div>
+          <div class="modal-ticket-btn" onclick="selectModalTicket(10)" id="mt_10">10</div>
+        </div>
+      </div>
+
       <div class="modal-btns">
         <button style="background: #e0e0e0;" onclick="closeModal()">キャンセル</button>
         <button style="background: var(--primary-color); color: white;" onclick="confirmOrder()">追加する</button>
@@ -634,7 +623,7 @@
     ];
 
     let currentDay = 1;
-    let selectedTicket = null;
+    let selectedTicket = null; // モーダル内で選択中の整理券番号
     let historyStateStack = [];
 
     function createDayData() {
@@ -756,13 +745,13 @@
       renderAll(false);
     }
 
-    function selectTicket(num) {
+    function selectModalTicket(num) {
       selectedTicket = num;
-      document.querySelectorAll('.ticket-btn').forEach(btn => btn.classList.remove('selected'));
+      document.querySelectorAll('.modal-ticket-btn').forEach(btn => btn.classList.remove('selected'));
       if (num === null) {
-        document.getElementById('ticket_none').classList.add('selected');
+        document.getElementById('mt_none').classList.add('selected');
       } else {
-        document.getElementById(`ticket_${num}`).classList.add('selected');
+        document.getElementById(`mt_${num}`).classList.add('selected');
       }
     }
 
@@ -866,11 +855,10 @@
         return;
       }
 
-      if (selectedTicket !== null) {
-        summaryText.push(`<br><strong style="color:var(--accent-color);">🏷️ 整理券番号: ${selectedTicket}番</strong>`);
-      }
-
       pendingOrder = items;
+      selectedTicket = null; // モーダルを開くたびに初期化（なし）
+      selectModalTicket(null);
+
       document.getElementById('modalContent').innerHTML = summaryText.join('<br>');
       document.getElementById('confirmModal').style.display = 'flex';
     }
@@ -894,7 +882,6 @@
       });
 
       resetInputs('ord');
-      selectTicket(null);
       closeModal();
       renderAll(false);
     }
@@ -1051,7 +1038,6 @@
       container.innerHTML = html;
     }
 
-    // 売上レポートファイル出力機能
     function exportDailyReport() {
       const dayData = appData[currentDay];
       const sales = dayData.sales || {};
@@ -1110,7 +1096,6 @@
         document.getElementById('daySelect').value = '1';
         resetInputs('ord');
         resetInputs('bake');
-        selectTicket(null);
         renderAll(false);
         alert('データをすべて削除し、新品の状態にリセットしました！');
       }
