@@ -206,14 +206,15 @@
     }
 
     .ticket-badge {
-      background-color: var(--accent-color);
-      color: white;
-      font-size: 14px;
+      background-color: #ffffff;
+      color: var(--primary-color);
+      font-size: 15px;
       font-weight: bold;
-      padding: 3px 8px;
-      border-radius: 6px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 2px solid var(--primary-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      letter-spacing: 0.5px;
     }
 
     .btn-pass {
@@ -725,7 +726,6 @@
       saveData();
     }
 
-    // ① 完売チェックボックスを削除し、在庫0で自動売り切れ表示に
     function renderStock() {
       const data = appData[currentDay].stock || {};
       let html = '';
@@ -792,7 +792,7 @@
       let html = '';
       list.forEach((ord, index) => {
         const itemsStr = ord.items ? ord.items.map(i => `${i.short}${i.count}`).join(' ') : '';
-        const ticketBadge = ord.ticket !== null ? `<span class="ticket-badge">［ ${ord.ticket} ］</span>` : '';
+        const ticketBadge = ord.ticket !== null ? `<span class="ticket-badge">${ord.ticket}</span>` : '';
         
         html += `
           <div class="waiting-item">
@@ -942,13 +942,11 @@
       renderAll(false);
     }
 
-    // ② 在庫不足時の「お渡し」ブロック機能
     function completeOrder(index) {
       const dayData = appData[currentDay];
       const target = dayData.waiting[index];
       const stock = dayData.stock || {};
 
-      // 在庫チェック
       let errorMsg = "";
       target.items.forEach(item => {
         const currentStock = stock[item.id] || 0;
@@ -979,11 +977,11 @@
         totalPrice += item.price * item.count;
       });
 
-      const ticketInfo = target.ticket !== null ? `[札:${target.ticket}] ` : '';
+      // レポートおよび購入履歴には札番号を残さないように修正
       dayData.history.unshift({
         no: target.no,
         time: timeStr,
-        text: `${ticketInfo}${detailStrs.join(' ')}`,
+        text: `${detailStrs.join(' ')}`,
         price: totalPrice
       });
 
