@@ -202,23 +202,34 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--border-color);
     }
 
-    .waiting-info {
+    .waiting-info-main {
       font-size: 15px;
-      font-weight: 500;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .tag-ticket {
+    .waiting-right-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 整理券バッジのデザイン（②の修正点） */
+    .ticket-badge {
       background-color: var(--accent-color);
       color: white;
-      font-size: 13px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-right: 6px;
+      font-size: 14px;
       font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+      letter-spacing: 1px;
     }
 
     .btn-pass {
@@ -446,7 +457,7 @@
       background-color: #fdf2f2;
     }
 
-    /* モーダル内レイアウト調整 */
+    /* モーダルのデザイン調整（③の修正点） */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -459,23 +470,42 @@
 
     .modal {
       background: white;
-      padding: 20px;
+      padding: 18px 20px;
       border-radius: 12px;
-      width: 340px;
+      width: 320px;
       text-align: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .modal-order-content {
+      margin: 10px 0 14px 0;
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--primary-color);
+      background-color: #faf8f5;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #efebe4;
+      line-height: 1.4;
+    }
+
+    .modal-ticket-area {
+      text-align: left;
+      margin-top: 10px;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 10px;
     }
 
     .modal-ticket-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 4px;
-      margin: 12px 0;
+      margin-top: 6px;
     }
 
     .modal-ticket-btn {
-      padding: 8px 0;
-      font-size: 13px;
+      padding: 6px 0;
+      font-size: 12px;
       font-weight: bold;
       background-color: var(--tag-bg);
       border: 1px solid var(--border-color);
@@ -488,6 +518,15 @@
       background-color: var(--tag-active);
       color: var(--tag-active-text);
       border-color: var(--tag-active);
+    }
+
+    /* ロックされた（渡されている）整理券ボタンのスタイル（①の修正点） */
+    .modal-ticket-btn.disabled {
+      background-color: #e0e0e0;
+      color: #a0a0a0;
+      border-color: #cccccc;
+      cursor: not-allowed;
+      opacity: 0.6;
     }
 
     .modal-btns {
@@ -534,7 +573,6 @@
       <div class="waiting-list" id="waitingList"></div>
     </div>
 
-    <!-- 注文追加カード（スッキリした見た目に戻しました） -->
     <div class="card">
       <div class="card-title">📝 注文を追加</div>
       <div id="orderInputs"></div>
@@ -587,11 +625,13 @@
   <!-- 確認・整理券選択モーダル -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal">
-      <h3>注文内容の確認</h3>
-      <p style="margin: 10px 0; font-size: 15px;" id="modalContent"></p>
+      <h3 style="font-size: 16px; color: #555;">注文内容の確認</h3>
+      <!-- 注文商品をドーンと見やすく表示（③の修正点） -->
+      <div class="modal-order-content" id="modalContent"></div>
       
-      <div style="text-align: left; margin-top: 12px; border-top: 1px dashed var(--border-color); pt: 8px;">
-        <label style="font-size: 13px; font-weight: bold; color: var(--primary-color);">🏷️ 整理券番号を選択（混雑時のみ）</label>
+      <!-- コンパクトな整理券選択エリア（③の修正点） -->
+      <div class="modal-ticket-area">
+        <label style="font-size: 12px; font-weight: bold; color: var(--primary-color);">🏷️ 整理券番号を選択（使用中不可）</label>
         <div class="modal-ticket-grid" id="modalTicketGrid">
           <div class="modal-ticket-btn selected" onclick="selectModalTicket(null)" id="mt_none">なし</div>
           <div class="modal-ticket-btn" onclick="selectModalTicket(1)" id="mt_1">1</div>
@@ -623,7 +663,7 @@
     ];
 
     let currentDay = 1;
-    let selectedTicket = null; // モーダル内で選択中の整理券番号
+    let selectedTicket = null;
     let historyStateStack = [];
 
     function createDayData() {
@@ -746,6 +786,13 @@
     }
 
     function selectModalTicket(num) {
+      // ロック中の番号は選択不可（①の機能）
+      if (num !== null) {
+        const waitingList = appData[currentDay].waiting || [];
+        const isUsed = waitingList.some(ord => ord.ticket === num);
+        if (isUsed) return;
+      }
+
       selectedTicket = num;
       document.querySelectorAll('.modal-ticket-btn').forEach(btn => btn.classList.remove('selected'));
       if (num === null) {
@@ -755,6 +802,7 @@
       }
     }
 
+    // お待ちのお客様リストの表示（②の修正点）
     function renderWaiting() {
       const list = appData[currentDay].waiting || [];
       const container = document.getElementById('waitingList');
@@ -784,11 +832,19 @@
       let html = '';
       list.forEach((ord, index) => {
         const itemsStr = ord.items ? ord.items.map(i => `${i.short}${i.count}`).join(' ') : '';
-        const ticketBadge = ord.ticket !== null ? `<span class="tag-ticket">札:${ord.ticket}</span>` : '';
+        // 整理券がある場合は右側に［1］風のバッジを配置
+        const ticketBadge = ord.ticket !== null ? `<span class="ticket-badge">［ ${ord.ticket} ］</span>` : '';
+        
         html += `
           <div class="waiting-item">
-            <div class="waiting-info">${ticketBadge}No.${ord.no}: ${itemsStr}</div>
-            <button class="btn-pass" onclick="completeOrder(${index})">お渡し</button>
+            <div class="waiting-info-main">
+              <span>No.${ord.no}</span>
+              <span style="font-weight:normal;">${itemsStr}</span>
+            </div>
+            <div class="waiting-right-area">
+              ${ticketBadge}
+              <button class="btn-pass" onclick="completeOrder(${index})">お渡し</button>
+            </div>
           </div>
         `;
       });
@@ -856,7 +912,21 @@
       }
 
       pendingOrder = items;
-      selectedTicket = null; // モーダルを開くたびに初期化（なし）
+      selectedTicket = null;
+
+      // 使用中の整理券を判定してモーダルのボタン状態を更新（①の機能）
+      const waitingList = appData[currentDay].waiting || [];
+      const usedTickets = waitingList.map(ord => ord.ticket).filter(t => t !== null);
+
+      for (let i = 1; i <= 10; i++) {
+        const btn = document.getElementById(`mt_${i}`);
+        if (usedTickets.includes(i)) {
+          btn.classList.add('disabled');
+        } else {
+          btn.classList.remove('disabled');
+        }
+      }
+
       selectModalTicket(null);
 
       document.getElementById('modalContent').innerHTML = summaryText.join('<br>');
