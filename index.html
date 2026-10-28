@@ -131,7 +131,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 12px;
+      padding: 10px 12px;
       background-color: #faf8f5;
       border-radius: 8px;
       border: 1px solid #efebe4;
@@ -140,35 +140,12 @@
     .stock-info {
       display: flex;
       align-items: center;
+      gap: 8px;
     }
 
     .stock-name {
       font-weight: bold;
       font-size: 16px;
-    }
-
-    .stock-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .stock-count {
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .stock-count.low {
-      color: var(--danger-color);
-    }
-
-    .toggle-soldout {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      color: #666;
-      cursor: pointer;
     }
 
     .sold-out-badge {
@@ -177,7 +154,15 @@
       font-size: 12px;
       padding: 2px 6px;
       border-radius: 4px;
-      margin-left: 6px;
+    }
+
+    .stock-count {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .stock-count.low {
+      color: var(--danger-color);
     }
 
     .needed-summary {
@@ -220,7 +205,6 @@
       gap: 8px;
     }
 
-    /* 整理券バッジのデザイン（②の修正点） */
     .ticket-badge {
       background-color: var(--accent-color);
       color: white;
@@ -457,7 +441,6 @@
       background-color: #fdf2f2;
     }
 
-    /* モーダルのデザイン調整（③の修正点） */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -520,7 +503,6 @@
       border-color: var(--tag-active);
     }
 
-    /* ロックされた（渡されている）整理券ボタンのスタイル（①の修正点） */
     .modal-ticket-btn.disabled {
       background-color: #e0e0e0;
       color: #a0a0a0;
@@ -622,14 +604,11 @@
     </div>
   </div>
 
-  <!-- 確認・整理券選択モーダル -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal">
       <h3 style="font-size: 16px; color: #555;">注文内容の確認</h3>
-      <!-- 注文商品をドーンと見やすく表示（③の修正点） -->
       <div class="modal-order-content" id="modalContent"></div>
       
-      <!-- コンパクトな整理券選択エリア（③の修正点） -->
       <div class="modal-ticket-area">
         <label style="font-size: 12px; font-weight: bold; color: var(--primary-color);">🏷️ 整理券番号を選択（使用中不可）</label>
         <div class="modal-ticket-grid" id="modalTicketGrid">
@@ -669,7 +648,6 @@
     function createDayData() {
       return {
         stock: { anko: 0, custard: 0, cinnamon: 0, potato: 0 },
-        manualSoldOut: { anko: false, custard: false, cinnamon: false, potato: false },
         waiting: [],
         sales: { anko: 0, custard: 0, cinnamon: 0, potato: 0 },
         history: [],
@@ -709,7 +687,6 @@
             if (parsed[d]) {
               appData[d] = {
                 stock: { ...createDayData().stock, ...(parsed[d].stock || {}) },
-                manualSoldOut: { ...createDayData().manualSoldOut, ...(parsed[d].manualSoldOut || {}) },
                 waiting: Array.isArray(parsed[d].waiting) ? parsed[d].waiting : [],
                 sales: { ...createDayData().sales, ...(parsed[d].sales || {}) },
                 history: Array.isArray(parsed[d].history) ? parsed[d].history : [],
@@ -748,45 +725,29 @@
       saveData();
     }
 
+    // ① 完売チェックボックスを削除し、在庫0で自動売り切れ表示に
     function renderStock() {
       const data = appData[currentDay].stock || {};
-      const soldOutData = appData[currentDay].manualSoldOut || {};
       let html = '';
       MENU.forEach(item => {
         const count = data[item.id] || 0;
-        const isManualSoldOut = soldOutData[item.id] || false;
         const isLow = count <= 5;
-        const isSoldOut = count === 0 || isManualSoldOut;
+        const isSoldOut = count === 0;
 
         html += `
           <div class="stock-item">
             <div class="stock-info">
-              <div>
-                <span class="stock-name">${item.emoji} ${item.name}</span>
-                ${isSoldOut ? '<span class="sold-out-badge">売り切れ</span>' : ''}
-              </div>
+              <span class="stock-name">${item.emoji} ${item.name}</span>
+              ${isSoldOut ? '<span class="sold-out-badge">売り切れ</span>' : ''}
             </div>
-            <div class="stock-right">
-              <label class="toggle-soldout">
-                <input type="checkbox" ${isManualSoldOut ? 'checked' : ''} onchange="toggleManualSoldOut('${item.id}', this.checked)"> 完売
-              </label>
-              <div class="stock-count ${isLow ? 'low' : ''}">${count}個</div>
-            </div>
+            <div class="stock-count ${isLow ? 'low' : ''}">${count}個</div>
           </div>
         `;
       });
       document.getElementById('stockList').innerHTML = html;
     }
 
-    function toggleManualSoldOut(itemId, isChecked) {
-      recordState();
-      if (!appData[currentDay].manualSoldOut) appData[currentDay].manualSoldOut = {};
-      appData[currentDay].manualSoldOut[itemId] = isChecked;
-      renderAll(false);
-    }
-
     function selectModalTicket(num) {
-      // ロック中の番号は選択不可（①の機能）
       if (num !== null) {
         const waitingList = appData[currentDay].waiting || [];
         const isUsed = waitingList.some(ord => ord.ticket === num);
@@ -802,7 +763,6 @@
       }
     }
 
-    // お待ちのお客様リストの表示（②の修正点）
     function renderWaiting() {
       const list = appData[currentDay].waiting || [];
       const container = document.getElementById('waitingList');
@@ -832,7 +792,6 @@
       let html = '';
       list.forEach((ord, index) => {
         const itemsStr = ord.items ? ord.items.map(i => `${i.short}${i.count}`).join(' ') : '';
-        // 整理券がある場合は右側に［1］風のバッジを配置
         const ticketBadge = ord.ticket !== null ? `<span class="ticket-badge">［ ${ord.ticket} ］</span>` : '';
         
         html += `
@@ -914,7 +873,6 @@
       pendingOrder = items;
       selectedTicket = null;
 
-      // 使用中の整理券を判定してモーダルのボタン状態を更新（①の機能）
       const waitingList = appData[currentDay].waiting || [];
       const usedTickets = waitingList.map(ord => ord.ticket).filter(t => t !== null);
 
@@ -984,15 +942,30 @@
       renderAll(false);
     }
 
+    // ② 在庫不足時の「お渡し」ブロック機能
     function completeOrder(index) {
+      const dayData = appData[currentDay];
+      const target = dayData.waiting[index];
+      const stock = dayData.stock || {};
+
+      // 在庫チェック
+      let errorMsg = "";
+      target.items.forEach(item => {
+        const currentStock = stock[item.id] || 0;
+        if (currentStock < item.count) {
+          errorMsg += `・${item.name} の在庫が足りません（現在庫: ${currentStock}個 / 必要数: ${item.count}個）\n`;
+        }
+      });
+
+      if (errorMsg !== "") {
+        alert("⚠️ 在庫が不足しているためお渡しできません。\n\n" + errorMsg + "\n※「製造を記録」から在庫を追加してください。");
+        return;
+      }
+
       recordState();
 
-      const dayData = appData[currentDay];
       if (!dayData.sales) dayData.sales = { anko: 0, custard: 0, cinnamon: 0, potato: 0 };
       if (!dayData.history) dayData.history = [];
-      if (!dayData.stock) dayData.stock = {};
-
-      const target = dayData.waiting[index];
 
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -1000,7 +973,7 @@
       let totalPrice = 0;
 
       target.items.forEach(item => {
-        dayData.stock[item.id] = Math.max(0, (dayData.stock[item.id] || 0) - item.count);
+        stock[item.id] = Math.max(0, (stock[item.id] || 0) - item.count);
         dayData.sales[item.id] = (dayData.sales[item.id] || 0) + item.count;
         detailStrs.push(`${item.short}${item.count}`);
         totalPrice += item.price * item.count;
