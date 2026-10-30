@@ -30,7 +30,7 @@
       user-select: none;
     }
 
-    input[type="number"] {
+    input[type="number"], textarea {
       -webkit-user-select: auto;
       user-select: auto;
     }
@@ -337,29 +337,74 @@
       gap: 8px;
     }
 
+    /* 管理エリアの左右分割レイアウト（2/3 : 1/3） */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .admin-left {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .admin-right {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .memo-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .memo-textarea {
+      width: 100%;
+      flex-grow: 1;
+      min-height: 200px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: #faf8f5;
+      font-size: 14px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .memo-textarea:focus {
+      border-color: var(--primary-color);
+      background-color: #ffffff;
+    }
+
     .chart-container {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
     }
 
     .chart-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
 
     .chart-label {
-      width: 140px;
-      font-size: 14px;
+      width: 120px;
+      font-size: 13px;
       font-weight: bold;
     }
 
     .chart-bar-wrapper {
       flex-grow: 1;
       background-color: #efebe4;
-      height: 20px;
-      border-radius: 10px;
+      height: 16px;
+      border-radius: 8px;
       overflow: hidden;
     }
 
@@ -371,38 +416,38 @@
     }
 
     .chart-val {
-      width: 120px;
+      width: 100px;
       text-align: right;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: bold;
     }
 
     .history-list {
-      max-height: 220px;
+      max-height: 150px;
       overflow-y: auto;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .history-item {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 6px 0;
       border-bottom: 1px dotted var(--border-color);
     }
 
     .days-summary {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .day-box {
       background-color: #faf8f5;
-      padding: 10px 14px;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
       display: flex;
       justify-content: space-between;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .action-btns-row {
@@ -582,26 +627,38 @@
 
   <div class="section-title">▼ 管理・記録</div>
 
-  <div class="card" style="margin-bottom: 16px;">
-    <div class="card-title">📊 今日の売れ行き</div>
-    <div class="chart-container" id="chartContainer"></div>
-  </div>
+  <!-- 管理エリア（左2/3 : 右1/3の2カラムレイアウト） -->
+  <div class="admin-grid">
+    <div class="admin-left">
+      <div class="card">
+        <div class="card-title">📊 今日の売れ行き</div>
+        <div class="chart-container" id="chartContainer"></div>
+      </div>
 
-  <div class="card" style="margin-bottom: 16px;">
-    <div class="card-title">👥 購入履歴</div>
-    <div class="history-list" id="historyList">まだ購入履歴はありません。</div>
-  </div>
+      <div class="card">
+        <div class="card-title">👥 購入履歴</div>
+        <div class="history-list" id="historyList">まだ購入履歴はありません。</div>
+      </div>
 
-  <div class="card" style="margin-bottom: 16px;">
-    <div class="card-title">📅 3日間の集計</div>
-    <div class="days-summary" id="threeDaysSummary"></div>
-  </div>
+      <div class="card">
+        <div class="card-title">📅 3日間の集計</div>
+        <div class="days-summary" id="threeDaysSummary"></div>
+      </div>
 
-  <div class="card" style="margin-bottom: 24px;">
-    <div class="card-title">⚙️ データ管理・集計</div>
-    <div class="action-btns-row">
-      <button class="btn-export" onclick="exportDailyReport()">📊 今日の売上をファイルに書き出す</button>
-      <button class="btn-reset" onclick="resetAllData()">全データクリア</button>
+      <div class="card">
+        <div class="card-title">⚙️ データ管理・集計</div>
+        <div class="action-btns-row">
+          <button class="btn-export" onclick="exportDailyReport()">📊 今日の売上をファイルに書き出す</button>
+          <button class="btn-reset" onclick="resetAllData()">全データクリア</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-right">
+      <div class="card memo-card">
+        <div class="card-title">📝 自由メモ・引き継ぎ</div>
+        <textarea id="memoText" class="memo-textarea" placeholder="買い出しメモや引き継ぎ事項などを自由に入力..." oninput="saveMemo()"></textarea>
+      </div>
     </div>
   </div>
 
@@ -652,6 +709,7 @@
         waiting: [],
         sales: { anko: 0, custard: 0, cinnamon: 0, potato: 0 },
         history: [],
+        memo: '',
         orderCounter: 1
       };
     }
@@ -691,6 +749,7 @@
                 waiting: Array.isArray(parsed[d].waiting) ? parsed[d].waiting : [],
                 sales: { ...createDayData().sales, ...(parsed[d].sales || {}) },
                 history: Array.isArray(parsed[d].history) ? parsed[d].history : [],
+                memo: parsed[d].memo || '',
                 orderCounter: parsed[d].orderCounter || 1
               };
             }
@@ -713,6 +772,12 @@
       renderAll(false);
     }
 
+    function saveMemo() {
+      const text = document.getElementById('memoText').value;
+      appData[currentDay].memo = text;
+      saveData();
+    }
+
     function renderAll(saveHistory = true) {
       if (saveHistory) {
         recordState();
@@ -723,6 +788,9 @@
       renderChart();
       renderHistory();
       render3DaysSummary();
+      
+      // メモ欄の復元
+      document.getElementById('memoText').value = appData[currentDay].memo || '';
       saveData();
     }
 
@@ -977,7 +1045,6 @@
         totalPrice += item.price * item.count;
       });
 
-      // レポートおよび購入履歴には札番号を残さないように修正
       dayData.history.unshift({
         no: target.no,
         time: timeStr,
@@ -1103,6 +1170,13 @@
       reportLines.push(`総販売数: ${totalCount}個`);
       reportLines.push(`総売上金額: ￥${totalAmount.toLocaleString()}`);
       reportLines.push("----------------------------------------");
+      
+      if (dayData.memo) {
+        reportLines.push("■ 自由メモ・備考");
+        reportLines.push(dayData.memo);
+        reportLines.push("----------------------------------------");
+      }
+
       reportLines.push("■ 購入履歴一覧");
 
       const history = dayData.history || [];
@@ -1126,7 +1200,7 @@
     }
 
     function resetAllData() {
-      if (confirm('1日目〜3日目のすべてのデータ（在庫・売上・履歴）を消去して初期化しますか？')) {
+      if (confirm('1日目〜3日目のすべてのデータ（在庫・売上・履歴・メモ）を消去して初期化しますか？')) {
         historyStateStack = [];
         appData = {
           1: createDayData(),
