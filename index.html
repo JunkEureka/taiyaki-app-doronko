@@ -337,7 +337,6 @@
       gap: 8px;
     }
 
-    /* 管理エリアの左右分割レイアウト（2/3 : 1/3） */
     .admin-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -627,7 +626,6 @@
 
   <div class="section-title">▼ 管理・記録</div>
 
-  <!-- 管理エリア（左2/3 : 右1/3の2カラムレイアウト） -->
   <div class="admin-grid">
     <div class="admin-left">
       <div class="card">
@@ -693,10 +691,11 @@
 
   <script>
     const MENU = [
-      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 200 },
-      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 200 },
+      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 150 },
+      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 150 },
       { id: 'cinnamon', emoji: '🍎', name: 'アップルシナモン', short: 'シナ', price: 200 },
-      { id: 'potato', emoji: '🥔', name: 'ジャーマンポテト', short: 'ポテ', price: 200 }
+      { id: 'potato', emoji: '🥔', name: 'ジャーマンポテト', short: 'ポテ', price: 200 },
+      { id: 'genmi', emoji: '🔮', name: '幻味', short: '幻', price: 300 }
     ];
 
     let currentDay = 1;
@@ -705,9 +704,9 @@
 
     function createDayData() {
       return {
-        stock: { anko: 0, custard: 0, cinnamon: 0, potato: 0 },
+        stock: { anko: 0, custard: 0, cinnamon: 0, potato: 0, genmi: 0 },
         waiting: [],
-        sales: { anko: 0, custard: 0, cinnamon: 0, potato: 0 },
+        sales: { anko: 0, custard: 0, cinnamon: 0, potato: 0, genmi: 0 },
         history: [],
         memo: '',
         orderCounter: 1
@@ -789,7 +788,6 @@
       renderHistory();
       render3DaysSummary();
       
-      // メモ欄の復元
       document.getElementById('memoText').value = appData[currentDay].memo || '';
       saveData();
     }
@@ -1030,7 +1028,7 @@
 
       recordState();
 
-      if (!dayData.sales) dayData.sales = { anko: 0, custard: 0, cinnamon: 0, potato: 0 };
+      if (!dayData.sales) dayData.sales = { anko: 0, custard: 0, cinnamon: 0, potato: 0, genmi: 0 };
       if (!dayData.history) dayData.history = [];
 
       const now = new Date();
