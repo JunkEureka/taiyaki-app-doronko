@@ -246,16 +246,16 @@
     .stepper {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
     .btn-step {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 38px;
       border-radius: 6px;
       border: 1px solid var(--border-color);
       background-color: #f0f0f0;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: bold;
       cursor: pointer;
       display: flex;
@@ -267,9 +267,14 @@
       background-color: #ddd;
     }
 
+    .btn-step.quick {
+      background-color: #e6e0d8;
+      color: var(--primary-color);
+    }
+
     .stepper input {
-      width: 48px;
-      height: 40px;
+      width: 44px;
+      height: 38px;
       text-align: center;
       border-radius: 6px;
       border: 1px solid var(--border-color);
@@ -701,7 +706,7 @@
           <div class="pax-btn" onclick="selectModalPax(2)">2人</div>
           <div class="pax-btn" onclick="selectModalPax(3)">3人</div>
           <div class="pax-btn" onclick="selectModalPax(4)">4人</div>
-          <div class="pax-btn" onclick="selectModalPax(5)">5人+</div>
+          <div class="pax-btn" onclick="selectModalPax(5)">5人</div>
         </div>
       </div>
 
@@ -732,8 +737,8 @@
 
   <script>
     const MENU = [
-      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 150 },
-      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 150 },
+      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 200 },
+      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 200 },
       { id: 'cinnamon', emoji: '🍎', name: 'アップルシナモン', short: 'シナ', price: 200 },
       { id: 'potato', emoji: '🥔', name: 'ジャーマンポテト', short: 'ポテ', price: 200 },
       { id: 'genmi', emoji: '🔮', name: '幻味', short: '幻', price: 300 }
@@ -936,6 +941,7 @@
       let orderHtml = '';
       let bakeHtml = '';
       MENU.forEach(item => {
+        // 注文追加画面（通常の-1, +1）
         orderHtml += `
           <div class="item-input-row">
             <label>${item.emoji} ${item.name} (${item.price}円)</label>
@@ -946,13 +952,17 @@
             </div>
           </div>
         `;
+
+        // 製造を記録画面（-5, -1, +1, +5）
         bakeHtml += `
           <div class="item-input-row">
             <label>${item.emoji} ${item.name}</label>
             <div class="stepper">
-              <button class="btn-step" onclick="changeInputValue('bake_${item.id}', -1)">-</button>
+              <button class="btn-step quick" onclick="changeInputValue('bake_${item.id}', -5)">-5</button>
+              <button class="btn-step" onclick="changeInputValue('bake_${item.id}', -1)">-1</button>
               <input type="number" id="bake_${item.id}" min="0" value="0">
-              <button class="btn-step" onclick="changeInputValue('bake_${item.id}', 1)">+</button>
+              <button class="btn-step" onclick="changeInputValue('bake_${item.id}', 1)">+1</button>
+              <button class="btn-step quick" onclick="changeInputValue('bake_${item.id}', 5)">+5</button>
             </div>
           </div>
         `;
