@@ -500,24 +500,24 @@
       background: white;
       padding: 18px 20px;
       border-radius: 12px;
-      width: 320px;
+      width: 340px;
       text-align: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     .modal-order-content {
-      margin: 10px 0 14px 0;
-      font-size: 18px;
+      margin: 8px 0 12px 0;
+      font-size: 16px;
       font-weight: bold;
       color: var(--primary-color);
       background-color: #faf8f5;
-      padding: 10px;
+      padding: 8px;
       border-radius: 8px;
       border: 1px solid #efebe4;
       line-height: 1.4;
     }
 
-    .modal-ticket-area {
+    .modal-section {
       text-align: left;
       margin-top: 10px;
       border-top: 1px dashed var(--border-color);
@@ -554,6 +554,30 @@
       border-color: #cccccc;
       cursor: not-allowed;
       opacity: 0.6;
+    }
+
+    .pax-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .pax-btn {
+      padding: 6px 0;
+      font-size: 13px;
+      font-weight: bold;
+      background-color: var(--tag-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .pax-btn.selected {
+      background-color: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
     }
 
     .modal-btns {
@@ -622,6 +646,10 @@
       <span>今日の販売数</span>
       <span class="summary-value" id="todayCount">0個</span>
     </div>
+    <div class="summary-item">
+      <span>来店人数</span>
+      <span class="summary-value" id="todayPax">0人</span>
+    </div>
   </div>
 
   <div class="section-title">▼ 管理・記録</div>
@@ -662,10 +690,23 @@
 
   <div class="modal-overlay" id="confirmModal">
     <div class="modal">
-      <h3 style="font-size: 16px; color: #555;">注文内容の確認</h3>
+      <h3 style="font-size: 15px; color: #555;">注文内容の確認</h3>
       <div class="modal-order-content" id="modalContent"></div>
       
-      <div class="modal-ticket-area">
+      <!-- 来店人数選択 -->
+      <div class="modal-section" style="margin-top: 0; border-top: none; padding-top: 0;">
+        <label style="font-size: 12px; font-weight: bold; color: var(--primary-color);">👥 来店人数を選択</label>
+        <div class="pax-grid" id="modalPaxGrid">
+          <div class="pax-btn selected" onclick="selectModalPax(1)">1人</div>
+          <div class="pax-btn" onclick="selectModalPax(2)">2人</div>
+          <div class="pax-btn" onclick="selectModalPax(3)">3人</div>
+          <div class="pax-btn" onclick="selectModalPax(4)">4人</div>
+          <div class="pax-btn" onclick="selectModalPax(5)">5人+</div>
+        </div>
+      </div>
+
+      <!-- 整理券番号選択 -->
+      <div class="modal-ticket-area modal-section">
         <label style="font-size: 12px; font-weight: bold; color: var(--primary-color);">🏷️ 整理券番号を選択（使用中不可）</label>
         <div class="modal-ticket-grid" id="modalTicketGrid">
           <div class="modal-ticket-btn selected" onclick="selectModalTicket(null)" id="mt_none">なし</div>
@@ -691,8 +732,8 @@
 
   <script>
     const MENU = [
-      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 200 },
-      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 200 },
+      { id: 'anko', emoji: '🫘', name: 'あんこ', short: 'あん', price: 150 },
+      { id: 'custard', emoji: '🍮', name: 'カスタード', short: 'カス', price: 150 },
       { id: 'cinnamon', emoji: '🍎', name: 'アップルシナモン', short: 'シナ', price: 200 },
       { id: 'potato', emoji: '🥔', name: 'ジャーマンポテト', short: 'ポテ', price: 200 },
       { id: 'genmi', emoji: '🔮', name: '幻味', short: '幻', price: 300 }
@@ -700,6 +741,7 @@
 
     let currentDay = 1;
     let selectedTicket = null;
+    let selectedPax = 1;
     let historyStateStack = [];
 
     function createDayData() {
@@ -707,6 +749,7 @@
         stock: { anko: 0, custard: 0, cinnamon: 0, potato: 0, genmi: 0 },
         waiting: [],
         sales: { anko: 0, custard: 0, cinnamon: 0, potato: 0, genmi: 0 },
+        totalPax: 0,
         history: [],
         memo: '',
         orderCounter: 1
@@ -747,6 +790,7 @@
                 stock: { ...createDayData().stock, ...(parsed[d].stock || {}) },
                 waiting: Array.isArray(parsed[d].waiting) ? parsed[d].waiting : [],
                 sales: { ...createDayData().sales, ...(parsed[d].sales || {}) },
+                totalPax: parsed[d].totalPax || 0,
                 history: Array.isArray(parsed[d].history) ? parsed[d].history : [],
                 memo: parsed[d].memo || '',
                 orderCounter: parsed[d].orderCounter || 1
@@ -829,6 +873,18 @@
       }
     }
 
+    function selectModalPax(pax) {
+      selectedPax = pax;
+      const btns = document.querySelectorAll('#modalPaxGrid .pax-btn');
+      btns.forEach((btn, idx) => {
+        if (idx + 1 === pax) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+    }
+
     function renderWaiting() {
       const list = appData[currentDay].waiting || [];
       const container = document.getElementById('waitingList');
@@ -864,7 +920,7 @@
           <div class="waiting-item">
             <div class="waiting-info-main">
               <span>No.${ord.no}</span>
-              <span style="font-weight:normal;">${itemsStr}</span>
+              <span style="font-weight:normal;">${itemsStr} (${ord.pax}人)</span>
             </div>
             <div class="waiting-right-area">
               ${ticketBadge}
@@ -938,6 +994,7 @@
 
       pendingOrder = items;
       selectedTicket = null;
+      selectModalPax(1);
 
       const waitingList = appData[currentDay].waiting || [];
       const usedTickets = waitingList.map(ord => ord.ticket).filter(t => t !== null);
@@ -972,8 +1029,11 @@
       dayData.waiting.push({
         no: dayData.orderCounter++,
         ticket: selectedTicket,
+        pax: selectedPax,
         items: pendingOrder
       });
+
+      dayData.totalPax = (dayData.totalPax || 0) + selectedPax;
 
       resetInputs('ord');
       closeModal();
@@ -1046,7 +1106,7 @@
       dayData.history.unshift({
         no: target.no,
         time: timeStr,
-        text: `${detailStrs.join(' ')}`,
+        text: `${detailStrs.join(' ')} (${target.pax}人)`,
         price: totalPrice
       });
 
@@ -1055,7 +1115,8 @@
     }
 
     function renderSummary() {
-      const sales = appData[currentDay].sales || {};
+      const dayData = appData[currentDay];
+      const sales = dayData.sales || {};
       let totalAmount = 0;
       let totalCount = 0;
 
@@ -1067,6 +1128,7 @@
 
       document.getElementById('todaySales').innerText = `￥${totalAmount.toLocaleString()}`;
       document.getElementById('todayCount').innerText = `${totalCount}個`;
+      document.getElementById('todayPax').innerText = `${dayData.totalPax || 0}人`;
     }
 
     function renderChart() {
@@ -1137,7 +1199,7 @@
         html += `
           <div class="day-box">
             <strong>${d}日目</strong>
-            <span>売上 ￥${totalAmount.toLocaleString()} / 販売 ${totalCount}個</span>
+            <span>来客 ${dData.totalPax || 0}人 / 売上 ￥${totalAmount.toLocaleString()}</span>
           </div>
         `;
       });
@@ -1154,6 +1216,10 @@
       reportLines.push(`【たい焼き屋台 売上レポート - ${currentDay}日目】`);
       reportLines.push(`出力日時: ${new Date().toLocaleString()}`);
       reportLines.push("----------------------------------------");
+      reportLines.push(`総来店人数: ${dayData.totalPax || 0}人`);
+      reportLines.push(`総販売数: ${totalCount}個`);
+      reportLines.push(`総売上金額: ￥${totalAmount.toLocaleString()}`);
+      reportLines.push("----------------------------------------");
       reportLines.push("■ 商品別内訳");
 
       MENU.forEach(item => {
@@ -1164,9 +1230,6 @@
         reportLines.push(`- ${item.name}: ${count}個 / ￥${amount.toLocaleString()}`);
       });
 
-      reportLines.push("----------------------------------------");
-      reportLines.push(`総販売数: ${totalCount}個`);
-      reportLines.push(`総売上金額: ￥${totalAmount.toLocaleString()}`);
       reportLines.push("----------------------------------------");
       
       if (dayData.memo) {
@@ -1198,7 +1261,7 @@
     }
 
     function resetAllData() {
-      if (confirm('1日目〜3日目のすべてのデータ（在庫・売上・履歴・メモ）を消去して初期化しますか？')) {
+      if (confirm('1日目〜3日目のすべてのデータ（在庫・売上・来客数・履歴・メモ）を消去して初期化しますか？')) {
         historyStateStack = [];
         appData = {
           1: createDayData(),
