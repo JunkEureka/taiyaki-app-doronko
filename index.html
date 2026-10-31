@@ -618,27 +618,31 @@
   </header>
 
   <div class="main-grid">
+    <!-- 左上：在庫 -->
     <div class="card">
       <div class="card-title"><span>在庫</span></div>
       <div class="stock-list" id="stockList"></div>
     </div>
 
+    <!-- 右上：お待ちのお客様 -->
     <div class="card">
       <div class="card-title"><span>🧑 お待ちのお客様</span></div>
       <div id="neededSummary" class="needed-summary">残り必要数: なし</div>
       <div class="waiting-list" id="waitingList"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">📝 注文を追加</div>
-      <div id="orderInputs"></div>
-      <button class="btn-action btn-primary" onclick="openConfirmModal()">この注文を追加する</button>
-    </div>
-
+    <!-- 左下：製造を記録（在庫に追加） -->
     <div class="card">
       <div class="card-title">🔥 製造を記録</div>
       <div id="bakeInputs"></div>
       <button class="btn-action btn-secondary" onclick="addBakeToStock()">在庫に追加</button>
+    </div>
+
+    <!-- 右下：注文を追加 -->
+    <div class="card">
+      <div class="card-title">📝 注文を追加</div>
+      <div id="orderInputs"></div>
+      <button class="btn-action btn-primary" onclick="openConfirmModal()">この注文を追加する</button>
     </div>
   </div>
 
@@ -941,7 +945,6 @@
       let orderHtml = '';
       let bakeHtml = '';
       MENU.forEach(item => {
-        // 注文追加画面（通常の-1, +1）
         orderHtml += `
           <div class="item-input-row">
             <label>${item.emoji} ${item.name} (${item.price}円)</label>
@@ -953,7 +956,6 @@
           </div>
         `;
 
-        // 製造を記録画面（-5, -1, +1, +5）
         bakeHtml += `
           <div class="item-input-row">
             <label>${item.emoji} ${item.name}</label>
