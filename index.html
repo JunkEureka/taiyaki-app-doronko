@@ -111,7 +111,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 12px;
+      padding: 10px 12px;
       background-color: #faf8f5;
       border-radius: 8px;
       border: 1px solid #efebe4;
@@ -136,26 +136,33 @@
       border-radius: 4px;
     }
 
-    .stock-edit-area {
+    .stock-right-area {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
     }
 
-    .stock-input {
-      width: 65px;
-      height: 38px;
-      text-align: center;
+    .stock-count {
       font-size: 20px;
       font-weight: bold;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      background-color: #fff;
     }
 
-    .stock-input.low {
+    .stock-count.low {
       color: var(--danger-color);
-      border-color: var(--danger-color);
+    }
+
+    .btn-edit-stock {
+      background-color: #e0e0e0;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .btn-edit-stock:hover {
+      background-color: #cccccc;
     }
 
     .needed-summary {
@@ -513,7 +520,7 @@
       background: white;
       padding: 18px 20px;
       border-radius: 12px;
-      width: 340px;
+      width: 320px;
       text-align: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
@@ -625,9 +632,9 @@
   </header>
 
   <div class="main-grid">
-    <!-- 左上：在庫（直接修正可） -->
+    <!-- 左上：在庫 -->
     <div class="card">
-      <div class="card-title"><span>在庫（直接修正可）</span></div>
+      <div class="card-title"><span>在庫</span></div>
       <div class="stock-list" id="stockList"></div>
     </div>
 
@@ -704,10 +711,10 @@
     </div>
   </div>
 
-  <!-- 新規・確認用モーダル -->
+  <!-- 新規注文確認用モーダル -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal">
-      <h3 style="font-size: 15px; color: #555;" id="modalTitle">注文内容の確認</h3>
+      <h3 style="font-size: 15px; color: #555;">注文内容の確認</h3>
       <div class="modal-order-content" id="modalContent"></div>
       
       <!-- 来店人数選択 -->
@@ -742,7 +749,34 @@
 
       <div class="modal-btns">
         <button style="background: #e0e0e0;" onclick="closeModal()">キャンセル</button>
-        <button style="background: var(--primary-color); color: white;" id="modalSubmitBtn" onclick="confirmOrder()">追加する</button>
+        <button style="background: var(--primary-color); color: white;" onclick="confirmOrder()">追加する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 在庫個別修正用モーダル -->
+  <div class="modal-overlay" id="stockEditModal">
+    <div class="modal" style="width: 280px;">
+      <h3 style="font-size: 15px; color: #555;" id="stockEditTitle">在庫数の修正</h3>
+      <div style="margin: 16px 0;">
+        <input type="number" id="stockEditInput" min="0" style="width: 100px; height: 44px; text-align: center; font-size: 24px; font-weight: bold; border: 1px solid var(--border-color); border-radius: 8px;">
+        <span style="font-size: 16px; font-weight: bold; margin-left: 6px;">個</span>
+      </div>
+      <div class="modal-btns">
+        <button style="background: #e0e0e0;" onclick="closeStockEditModal()">キャンセル</button>
+        <button style="background: var(--primary-color); color: white;" onclick="saveStockEdit()">変更を保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 注文内容（味と個数）編集用モーダル -->
+  <div class="modal-overlay" id="orderEditModal">
+    <div class="modal" style="width: 320px;">
+      <h3 style="font-size: 15px; color: #555;" id="orderEditTitle">注文内容の編集</h3>
+      <div id="orderEditInputs" style="margin: 12px 0; text-align: left;"></div>
+      <div class="modal-btns">
+        <button style="background: #e0e0e0;" onclick="closeOrderEditModal()">キャンセル</button>
+        <button style="background: var(--primary-color); color: white;" onclick="saveOrderEdit()">変更を保存</button>
       </div>
     </div>
   </div>
@@ -759,7 +793,8 @@
     let currentDay = 1;
     let selectedTicket = null;
     let selectedPax = 1;
-    let editingIndex = null; // 編集中の待ちリストインデックス
+    let editingStockId = null;
+    let editingOrderIndex = null;
 
     function createDayData() {
       return {
@@ -847,9 +882,9 @@
               <span class="stock-name">${item.emoji} ${item.name}</span>
               ${isSoldOut ? '<span class="sold-out-badge">売り切れ</span>' : ''}
             </div>
-            <div class="stock-edit-area">
-              <input type="number" class="stock-input ${isLow ? 'low' : ''}" value="${count}" min="0" onchange="updateStockDirect('${item.id}', this.value)">
-              <span style="font-size: 14px; font-weight: bold;">個</span>
+            <div class="stock-right-area">
+              <span class="stock-count ${isLow ? 'low' : ''}">${count}個</span>
+              <button class="btn-edit-stock" onclick="openStockEditModal('${item.id}')">編集</button>
             </div>
           </div>
         `;
@@ -857,18 +892,90 @@
       document.getElementById('stockList').innerHTML = html;
     }
 
-    function updateStockDirect(itemId, valStr) {
-      let val = parseInt(valStr);
+    // 在庫個別編集モーダル
+    function openStockEditModal(itemId) {
+      editingStockId = itemId;
+      const item = MENU.find(i => i.id === itemId);
+      const currentVal = (appData[currentDay].stock || {})[itemId] || 0;
+      
+      document.getElementById('stockEditTitle').innerText = `${item.emoji} ${item.name} の在庫修正`;
+      document.getElementById('stockEditInput').value = currentVal;
+      document.getElementById('stockEditModal').style.display = 'flex';
+    }
+
+    function closeStockEditModal() {
+      document.getElementById('stockEditModal').style.display = 'none';
+      editingStockId = null;
+    }
+
+    function saveStockEdit() {
+      if (editingStockId === null) return;
+      let val = parseInt(document.getElementById('stockEditInput').value);
       if (isNaN(val) || val < 0) val = 0;
+
       if (!appData[currentDay].stock) appData[currentDay].stock = {};
-      appData[currentDay].stock[itemId] = val;
+      appData[currentDay].stock[editingStockId] = val;
+
+      closeStockEditModal();
+      renderAll();
+    }
+
+    // 注文内容（味と個数）の編集モーダル
+    function openOrderEditModal(index) {
+      editingOrderIndex = index;
+      const target = appData[currentDay].waiting[index];
+
+      document.getElementById('orderEditTitle').innerText = `注文 No.${target.no} の内容変更`;
+
+      let html = '';
+      MENU.forEach(item => {
+        const found = target.items.find(i => i.id === item.id);
+        const val = found ? found.count : 0;
+        html += `
+          <div class="item-input-row">
+            <label>${item.emoji} ${item.name}</label>
+            <div class="stepper">
+              <button class="btn-step" onclick="changeInputValue('edit_${item.id}', -1)">-</button>
+              <input type="number" id="edit_${item.id}" min="0" value="${val}">
+              <button class="btn-step" onclick="changeInputValue('edit_${item.id}', 1)">+</button>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('orderEditInputs').innerHTML = html;
+      document.getElementById('orderEditModal').style.display = 'flex';
+    }
+
+    function closeOrderEditModal() {
+      document.getElementById('orderEditModal').style.display = 'none';
+      editingOrderIndex = null;
+    }
+
+    function saveOrderEdit() {
+      if (editingOrderIndex === null) return;
+
+      const newItems = [];
+      MENU.forEach(item => {
+        const val = parseInt(document.getElementById(`edit_${item.id}`).value) || 0;
+        if (val > 0) {
+          newItems.push({ id: item.id, name: item.name, short: item.short, count: val, price: item.price });
+        }
+      });
+
+      if (newItems.length === 0) {
+        alert('個数を1つ以上入力してください。');
+        return;
+      }
+
+      appData[currentDay].waiting[editingOrderIndex].items = newItems;
+      closeOrderEditModal();
       renderAll();
     }
 
     function selectModalTicket(num) {
       if (num !== null) {
         const waitingList = appData[currentDay].waiting || [];
-        const isUsed = waitingList.some((ord, idx) => ord.ticket === num && idx !== editingIndex);
+        const isUsed = waitingList.some(ord => ord.ticket === num);
         if (isUsed) return;
       }
 
@@ -932,7 +1039,7 @@
             </div>
             <div class="waiting-right-area">
               ${ticketBadge}
-              <button class="btn-edit" onclick="openEditModal(${index})">編集</button>
+              <button class="btn-edit" onclick="openOrderEditModal(${index})">編集</button>
               <button class="btn-pass" onclick="completeOrder(${index})">お渡し</button>
             </div>
           </div>
@@ -987,8 +1094,8 @@
       });
     }
 
+    let pendingOrder = null;
     function openConfirmModal() {
-      editingIndex = null;
       const items = [];
       let summaryText = [];
       MENU.forEach(item => {
@@ -1004,43 +1111,12 @@
         return;
       }
 
-      document.getElementById('modalTitle').innerText = "注文内容の確認";
-      document.getElementById('modalSubmitBtn').innerText = "追加する";
-
+      pendingOrder = items;
       selectedTicket = null;
       selectModalPax(1);
 
-      setupModalTicketsAndGrid(items);
-    }
-
-    function openEditModal(index) {
-      editingIndex = index;
-      const target = appData[currentDay].waiting[index];
-      
-      // 入力フォームの値を該当注文の個数に合わせる
-      MENU.forEach(item => {
-        const found = target.items.find(i => i.id === item.id);
-        document.getElementById(`ord_${item.id}`).value = found ? found.count : 0;
-      });
-
-      document.getElementById('modalTitle').innerText = `注文内容の編集 (No.${target.no})`;
-      document.getElementById('modalSubmitBtn').innerText = "変更を保存";
-
-      selectedTicket = target.ticket;
-      selectModalPax(target.pax);
-
-      setupModalTicketsAndGrid(target.items);
-    }
-
-    function setupModalTicketsAndGrid(items) {
-      let summaryText = [];
-      items.forEach(i => {
-        const m = MENU.find(x => x.id === i.id);
-        if (m) summaryText.push(`${m.emoji} ${m.name} × ${i.count}`);
-      });
-
       const waitingList = appData[currentDay].waiting || [];
-      const usedTickets = waitingList.map((ord, idx) => (idx === editingIndex ? null : ord.ticket)).filter(t => t !== null);
+      const usedTickets = waitingList.map(ord => ord.ticket).filter(t => t !== null);
 
       for (let i = 1; i <= 10; i++) {
         const btn = document.getElementById(`mt_${i}`);
@@ -1051,7 +1127,7 @@
         }
       }
 
-      selectModalTicket(selectedTicket);
+      selectModalTicket(null);
 
       document.getElementById('modalContent').innerHTML = summaryText.join('<br>');
       document.getElementById('confirmModal').style.display = 'flex';
@@ -1059,44 +1135,23 @@
 
     function closeModal() {
       document.getElementById('confirmModal').style.display = 'none';
-      editingIndex = null;
+      pendingOrder = null;
     }
 
     function confirmOrder() {
-      const items = [];
-      MENU.forEach(item => {
-        const val = parseInt(document.getElementById(`ord_${item.id}`).value) || 0;
-        if (val > 0) {
-          items.push({ id: item.id, name: item.name, short: item.short, count: val, price: item.price });
-        }
-      });
-
-      if (items.length === 0) {
-        alert('個数を入力してください。');
-        return;
-      }
-
+      if (!pendingOrder) return;
+      
       const dayData = appData[currentDay];
       if (!dayData.waiting) dayData.waiting = [];
+      
+      dayData.waiting.push({
+        no: dayData.orderCounter++,
+        ticket: selectedTicket,
+        pax: selectedPax,
+        items: pendingOrder
+      });
 
-      if (editingIndex !== null) {
-        // 編集モードの場合の更新処理
-        const oldPax = dayData.waiting[editingIndex].pax;
-        dayData.waiting[editingIndex].ticket = selectedTicket;
-        dayData.waiting[editingIndex].pax = selectedPax;
-        dayData.waiting[editingIndex].items = items;
-
-        dayData.totalPax = (dayData.totalPax || 0) - oldPax + selectedPax;
-      } else {
-        // 新規追加モードの場合
-        dayData.waiting.push({
-          no: dayData.orderCounter++,
-          ticket: selectedTicket,
-          pax: selectedPax,
-          items: items
-        });
-        dayData.totalPax = (dayData.totalPax || 0) + selectedPax;
-      }
+      dayData.totalPax = (dayData.totalPax || 0) + selectedPax;
 
       resetInputs('ord');
       closeModal();
