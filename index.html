@@ -65,26 +65,6 @@
       align-items: center;
     }
 
-    .btn-undo {
-      padding: 8px 14px;
-      font-size: 14px;
-      font-weight: bold;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      background-color: #ffffff;
-      color: var(--primary-color);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: background 0.2s;
-    }
-
-    .btn-undo:hover {
-      background-color: #f0f0f0;
-    }
-
     .day-selector select {
       padding: 8px 12px;
       font-size: 15px;
@@ -131,7 +111,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 12px;
+      padding: 8px 12px;
       background-color: #faf8f5;
       border-radius: 8px;
       border: 1px solid #efebe4;
@@ -156,13 +136,26 @@
       border-radius: 4px;
     }
 
-    .stock-count {
-      font-size: 22px;
-      font-weight: bold;
+    .stock-edit-area {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .stock-count.low {
+    .stock-input {
+      width: 65px;
+      height: 38px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: #fff;
+    }
+
+    .stock-input.low {
       color: var(--danger-color);
+      border-color: var(--danger-color);
     }
 
     .needed-summary {
@@ -202,7 +195,7 @@
     .waiting-right-area {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .ticket-badge {
@@ -218,9 +211,10 @@
     }
 
     .btn-pass {
-      background-color: #e0e0e0;
+      background-color: var(--primary-color);
+      color: white;
       border: none;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
@@ -228,6 +222,20 @@
     }
 
     .btn-pass:hover {
+      background-color: #261f1a;
+    }
+
+    .btn-edit {
+      background-color: #e0e0e0;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .btn-edit:hover {
       background-color: #cccccc;
     }
 
@@ -606,7 +614,6 @@
   <header>
     <div class="logo">🐟 たい焼き屋台</div>
     <div class="header-controls">
-      <button class="btn-undo" onclick="undoLastAction()">↩ 前に戻す</button>
       <div class="day-selector">
         <select id="daySelect" onchange="changeDay(this.value)">
           <option value="1">1日目</option>
@@ -618,9 +625,9 @@
   </header>
 
   <div class="main-grid">
-    <!-- 左上：在庫 -->
+    <!-- 左上：在庫（直接修正可） -->
     <div class="card">
-      <div class="card-title"><span>在庫</span></div>
+      <div class="card-title"><span>在庫（直接修正可）</span></div>
       <div class="stock-list" id="stockList"></div>
     </div>
 
@@ -697,9 +704,10 @@
     </div>
   </div>
 
+  <!-- 新規・確認用モーダル -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal">
-      <h3 style="font-size: 15px; color: #555;">注文内容の確認</h3>
+      <h3 style="font-size: 15px; color: #555;" id="modalTitle">注文内容の確認</h3>
       <div class="modal-order-content" id="modalContent"></div>
       
       <!-- 来店人数選択 -->
@@ -734,7 +742,7 @@
 
       <div class="modal-btns">
         <button style="background: #e0e0e0;" onclick="closeModal()">キャンセル</button>
-        <button style="background: var(--primary-color); color: white;" onclick="confirmOrder()">追加する</button>
+        <button style="background: var(--primary-color); color: white;" id="modalSubmitBtn" onclick="confirmOrder()">追加する</button>
       </div>
     </div>
   </div>
@@ -751,7 +759,7 @@
     let currentDay = 1;
     let selectedTicket = null;
     let selectedPax = 1;
-    let historyStateStack = [];
+    let editingIndex = null; // 編集中の待ちリストインデックス
 
     function createDayData() {
       return {
@@ -770,23 +778,6 @@
       2: createDayData(),
       3: createDayData()
     };
-
-    function recordState() {
-      if (historyStateStack.length >= 20) {
-        historyStateStack.shift();
-      }
-      historyStateStack.push(JSON.stringify(appData));
-    }
-
-    function undoLastAction() {
-      if (historyStateStack.length === 0) {
-        alert('これ以上前に戻せません。');
-        return;
-      }
-      const previousState = historyStateStack.pop();
-      appData = JSON.parse(previousState);
-      renderAll(false);
-    }
 
     window.onload = function() {
       const saved = localStorage.getItem('taiyaki_app_data');
@@ -811,7 +802,7 @@
         }
       }
       renderInputs();
-      renderAll(false);
+      renderAll();
     };
 
     function saveData() {
@@ -821,7 +812,7 @@
     function changeDay(day) {
       currentDay = parseInt(day);
       document.getElementById('daySelect').value = day;
-      renderAll(false);
+      renderAll();
     }
 
     function saveMemo() {
@@ -830,10 +821,7 @@
       saveData();
     }
 
-    function renderAll(saveHistory = true) {
-      if (saveHistory) {
-        recordState();
-      }
+    function renderAll() {
       renderStock();
       renderWaiting();
       renderSummary();
@@ -859,17 +847,28 @@
               <span class="stock-name">${item.emoji} ${item.name}</span>
               ${isSoldOut ? '<span class="sold-out-badge">売り切れ</span>' : ''}
             </div>
-            <div class="stock-count ${isLow ? 'low' : ''}">${count}個</div>
+            <div class="stock-edit-area">
+              <input type="number" class="stock-input ${isLow ? 'low' : ''}" value="${count}" min="0" onchange="updateStockDirect('${item.id}', this.value)">
+              <span style="font-size: 14px; font-weight: bold;">個</span>
+            </div>
           </div>
         `;
       });
       document.getElementById('stockList').innerHTML = html;
     }
 
+    function updateStockDirect(itemId, valStr) {
+      let val = parseInt(valStr);
+      if (isNaN(val) || val < 0) val = 0;
+      if (!appData[currentDay].stock) appData[currentDay].stock = {};
+      appData[currentDay].stock[itemId] = val;
+      renderAll();
+    }
+
     function selectModalTicket(num) {
       if (num !== null) {
         const waitingList = appData[currentDay].waiting || [];
-        const isUsed = waitingList.some(ord => ord.ticket === num);
+        const isUsed = waitingList.some((ord, idx) => ord.ticket === num && idx !== editingIndex);
         if (isUsed) return;
       }
 
@@ -933,6 +932,7 @@
             </div>
             <div class="waiting-right-area">
               ${ticketBadge}
+              <button class="btn-edit" onclick="openEditModal(${index})">編集</button>
               <button class="btn-pass" onclick="completeOrder(${index})">お渡し</button>
             </div>
           </div>
@@ -987,8 +987,8 @@
       });
     }
 
-    let pendingOrder = null;
     function openConfirmModal() {
+      editingIndex = null;
       const items = [];
       let summaryText = [];
       MENU.forEach(item => {
@@ -1004,12 +1004,43 @@
         return;
       }
 
-      pendingOrder = items;
+      document.getElementById('modalTitle').innerText = "注文内容の確認";
+      document.getElementById('modalSubmitBtn').innerText = "追加する";
+
       selectedTicket = null;
       selectModalPax(1);
 
+      setupModalTicketsAndGrid(items);
+    }
+
+    function openEditModal(index) {
+      editingIndex = index;
+      const target = appData[currentDay].waiting[index];
+      
+      // 入力フォームの値を該当注文の個数に合わせる
+      MENU.forEach(item => {
+        const found = target.items.find(i => i.id === item.id);
+        document.getElementById(`ord_${item.id}`).value = found ? found.count : 0;
+      });
+
+      document.getElementById('modalTitle').innerText = `注文内容の編集 (No.${target.no})`;
+      document.getElementById('modalSubmitBtn').innerText = "変更を保存";
+
+      selectedTicket = target.ticket;
+      selectModalPax(target.pax);
+
+      setupModalTicketsAndGrid(target.items);
+    }
+
+    function setupModalTicketsAndGrid(items) {
+      let summaryText = [];
+      items.forEach(i => {
+        const m = MENU.find(x => x.id === i.id);
+        if (m) summaryText.push(`${m.emoji} ${m.name} × ${i.count}`);
+      });
+
       const waitingList = appData[currentDay].waiting || [];
-      const usedTickets = waitingList.map(ord => ord.ticket).filter(t => t !== null);
+      const usedTickets = waitingList.map((ord, idx) => (idx === editingIndex ? null : ord.ticket)).filter(t => t !== null);
 
       for (let i = 1; i <= 10; i++) {
         const btn = document.getElementById(`mt_${i}`);
@@ -1020,7 +1051,7 @@
         }
       }
 
-      selectModalTicket(null);
+      selectModalTicket(selectedTicket);
 
       document.getElementById('modalContent').innerHTML = summaryText.join('<br>');
       document.getElementById('confirmModal').style.display = 'flex';
@@ -1028,28 +1059,48 @@
 
     function closeModal() {
       document.getElementById('confirmModal').style.display = 'none';
-      pendingOrder = null;
+      editingIndex = null;
     }
 
     function confirmOrder() {
-      if (!pendingOrder) return;
-      recordState();
-      
-      const dayData = appData[currentDay];
-      if (!dayData.waiting) dayData.waiting = [];
-      
-      dayData.waiting.push({
-        no: dayData.orderCounter++,
-        ticket: selectedTicket,
-        pax: selectedPax,
-        items: pendingOrder
+      const items = [];
+      MENU.forEach(item => {
+        const val = parseInt(document.getElementById(`ord_${item.id}`).value) || 0;
+        if (val > 0) {
+          items.push({ id: item.id, name: item.name, short: item.short, count: val, price: item.price });
+        }
       });
 
-      dayData.totalPax = (dayData.totalPax || 0) + selectedPax;
+      if (items.length === 0) {
+        alert('個数を入力してください。');
+        return;
+      }
+
+      const dayData = appData[currentDay];
+      if (!dayData.waiting) dayData.waiting = [];
+
+      if (editingIndex !== null) {
+        // 編集モードの場合の更新処理
+        const oldPax = dayData.waiting[editingIndex].pax;
+        dayData.waiting[editingIndex].ticket = selectedTicket;
+        dayData.waiting[editingIndex].pax = selectedPax;
+        dayData.waiting[editingIndex].items = items;
+
+        dayData.totalPax = (dayData.totalPax || 0) - oldPax + selectedPax;
+      } else {
+        // 新規追加モードの場合
+        dayData.waiting.push({
+          no: dayData.orderCounter++,
+          ticket: selectedTicket,
+          pax: selectedPax,
+          items: items
+        });
+        dayData.totalPax = (dayData.totalPax || 0) + selectedPax;
+      }
 
       resetInputs('ord');
       closeModal();
-      renderAll(false);
+      renderAll();
     }
 
     function addBakeToStock() {
@@ -1064,8 +1115,6 @@
         return;
       }
 
-      recordState();
-
       const dayData = appData[currentDay];
       if (!dayData.stock) dayData.stock = {};
 
@@ -1077,7 +1126,7 @@
       });
 
       resetInputs('bake');
-      renderAll(false);
+      renderAll();
     }
 
     function completeOrder(index) {
@@ -1097,8 +1146,6 @@
         alert("⚠️ 在庫が不足しているためお渡しできません。\n\n" + errorMsg + "\n※「製造を記録」から在庫を追加してください。");
         return;
       }
-
-      recordState();
 
       if (!dayData.sales) dayData.sales = { anko: 0, custard: 0, cinnamon: 0, potato: 0, genmi: 0 };
       if (!dayData.history) dayData.history = [];
@@ -1123,7 +1170,7 @@
       });
 
       dayData.waiting.splice(index, 1);
-      renderAll(false);
+      renderAll();
     }
 
     function renderSummary() {
@@ -1274,7 +1321,6 @@
 
     function resetAllData() {
       if (confirm('1日目〜3日目のすべてのデータ（在庫・売上・来客数・履歴・メモ）を消去して初期化しますか？')) {
-        historyStateStack = [];
         appData = {
           1: createDayData(),
           2: createDayData(),
@@ -1284,7 +1330,7 @@
         document.getElementById('daySelect').value = '1';
         resetInputs('ord');
         resetInputs('bake');
-        renderAll(false);
+        renderAll();
         alert('データをすべて削除し、新品の状態にリセットしました！');
       }
     }
